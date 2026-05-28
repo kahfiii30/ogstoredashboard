@@ -21,6 +21,29 @@ export const AppProvider = ({ children }) => {
   const [db, setDbState] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Theme state
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('og_theme') || 'light';
+    }
+    return 'light';
+  });
+
+  // Effect to apply theme class
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('og_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  }, []);
+
   // Custom setDb that updates local state and syncs to Supabase
   const setDb = useCallback(async (newDbOrUpdater) => {
     setDbState(prev => {
@@ -236,7 +259,7 @@ export const AppProvider = ({ children }) => {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-slate-500 font-medium">Sinkronisasi Cloud...</p>
@@ -254,7 +277,9 @@ export const AppProvider = ({ children }) => {
       updateDailyData,
       updateActiveData,
       db,
-      defaultDayData
+      defaultDayData,
+      theme,
+      toggleTheme
     }}>
       {children}
     </AppContext.Provider>

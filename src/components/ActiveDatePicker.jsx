@@ -27,15 +27,15 @@ const ActiveDatePicker = () => {
   const isTodayOrFuture = activeDate >= todayStr;
 
   return (
-    <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1.5">
-      <div className="hidden sm:flex items-center px-3 border-r border-slate-100">
-        <CalendarDays className="w-4 h-4 text-brand-500 mr-2" />
-        <span className="text-sm font-semibold text-slate-600">Tanggal Aktif:</span>
+    <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-1.5 transition-colors">
+      <div className="hidden sm:flex items-center px-3 border-r border-slate-100 dark:border-slate-700">
+        <CalendarDays className="w-4 h-4 text-brand-500 dark:text-brand-400 mr-2" />
+        <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">Tanggal Aktif:</span>
       </div>
       
       <button 
         onClick={handlePrevDay}
-        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+        className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
         title="Hari Sebelumnya"
       >
         <ChevronLeft className="w-5 h-5" />
@@ -49,7 +49,7 @@ const ActiveDatePicker = () => {
           onChange={(e) => setActiveDate(e.target.value)}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <div className="px-3 py-1.5 bg-slate-50 rounded-lg text-sm font-bold text-slate-800 flex items-center justify-center min-w-[130px] border border-slate-200 group-hover:border-brand-300">
+        <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center justify-center min-w-[130px] border border-slate-200 dark:border-slate-700 group-hover:border-brand-300 dark:group-hover:border-brand-500 transition-colors">
           {formatDate(activeDate)}
         </div>
       </div>
@@ -59,8 +59,8 @@ const ActiveDatePicker = () => {
         disabled={isTodayOrFuture}
         className={`p-1.5 rounded-lg transition-colors ${
           isTodayOrFuture 
-            ? 'text-slate-300 cursor-not-allowed' 
-            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' 
+            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-100'
         }`}
         title="Hari Berikutnya"
       >
@@ -69,13 +69,13 @@ const ActiveDatePicker = () => {
 
       <button 
         onClick={handleToday}
-        className="hidden sm:block ml-1 px-3 py-1.5 bg-brand-50 text-brand-600 text-xs font-bold rounded-lg hover:bg-brand-100 transition-colors"
+        className="hidden sm:block ml-1 px-3 py-1.5 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-lg hover:bg-brand-100 dark:hover:bg-brand-800/50 transition-colors"
       >
         Hari Ini
       </button>
 
       {activeData?.meta?.createdFromDate && (
-        <div className="absolute top-16 right-4 sm:right-20 bg-blue-50 border border-blue-200 text-blue-700 text-xs px-3 py-2 rounded-lg shadow-sm animate-fade-in z-50 max-w-xs">
+        <div className="absolute top-16 right-4 sm:right-20 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 text-xs px-3 py-2 rounded-lg shadow-sm animate-fade-in z-50 max-w-xs">
           <strong>Info:</strong> Data tanggal ini awalnya disalin dari tanggal {formatDate(activeData.meta.createdFromDate)}. Perubahan baru akan berdiri sendiri.
         </div>
       )}

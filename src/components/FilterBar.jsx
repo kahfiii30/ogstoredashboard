@@ -21,8 +21,8 @@ const FilterBar = ({
     <div className="card p-4 md:p-5 mb-6 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-slate-400" />
-          <span className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Periode:</span>
+          <Calendar className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Periode:</span>
         </div>
         <div className="flex items-center gap-2">
           <input 
@@ -49,8 +49,8 @@ const FilterBar = ({
             className={clsx(
               "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 border",
               activeFilter === filter.id 
-                ? "bg-brand-50 border-brand-200 text-brand-700 shadow-sm"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-800"
+                ? "bg-brand-50 dark:bg-brand-900/30 border-brand-200 dark:border-brand-500/50 text-brand-700 dark:text-brand-300 shadow-sm"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-200"
             )}
           >
             {filter.label}

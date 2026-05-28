@@ -176,18 +176,21 @@ const DailySales = () => {
           icon={Package} 
           isCurrency={false}
           color="blue" 
+          className="delay-100 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Omzet" 
           value={summaryTotals.totalOmzet} 
           icon={DollarSign} 
           color="brand" 
+          className="delay-200 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Profit" 
           value={summaryTotals.totalProfit} 
           icon={TrendingUp} 
           color="emerald" 
+          className="delay-300 animate-fade-in-up"
         />
         <SummaryCard 
           title="Margin Kotor" 
@@ -195,15 +198,16 @@ const DailySales = () => {
           icon={Percent} 
           isCurrency={false}
           color="indigo" 
+          className="delay-400 animate-fade-in-up"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <SectionCard title={isEditing ? 'Edit Penjualan' : 'Tambah Penjualan'}>
+          <SectionCard title={isEditing ? 'Edit Penjualan' : 'Tambah Penjualan'} delayClass="delay-400">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
                 <select 
                   className="input-field"
                   value={formData.category}
@@ -215,7 +219,7 @@ const DailySales = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Unit Terjual</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unit Terjual</label>
                 <input 
                   type="number" 
                   className="input-field"
@@ -225,7 +229,7 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Penjualan / Omzet</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Penjualan / Omzet</label>
                 <input 
                   type="text" 
                   className="input-field"
@@ -236,7 +240,7 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">HPP / Modal</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">HPP / Modal</label>
                 <input 
                   type="text" 
                   className="input-field"
@@ -247,13 +251,13 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Laba / Profit Kotor (Rp) - <i>Otomatis</i></label>
-                <div className="input-field bg-emerald-50 text-emerald-700 font-bold border-emerald-200">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Laba / Profit Kotor (Rp) - <i>Otomatis</i></label>
+                <div className="input-field bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-bold border-emerald-200 dark:border-emerald-800/50">
                   {formatRupiah(calculatedProfit)}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Catatan</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Catatan</label>
                 <textarea 
                   className="input-field"
                   rows="2"
@@ -284,22 +288,24 @@ const DailySales = () => {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <SectionCard title="Ringkasan Penjualan">
+          <SectionCard title="Ringkasan Penjualan" delayClass="delay-500">
             <PremiumTable 
               columns={summaryCols} 
               data={summaryData} 
               highlightTotalRow={true}
             />
           </SectionCard>
+
+          <SectionCard title="Riwayat Penjualan" delayClass="delay-500">
+            <PremiumTable 
+              columns={columns} 
+              data={sales}
+            />
+          </SectionCard>
         </div>
       </div>
 
-      <SectionCard title="Riwayat Penjualan">
-        <PremiumTable 
-          columns={columns} 
-          data={sales}
-        />
-      </SectionCard>
+
 
       <ConfirmModal 
         isOpen={!!itemToDelete}

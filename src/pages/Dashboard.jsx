@@ -30,7 +30,7 @@ const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b', '#ef4444'];
 
 
 const Dashboard = () => {
-  const { activeData, previousData, activeDate, db } = useApp();
+  const { activeData, previousData, activeDate, db, theme } = useApp();
 
   // Active Date Calculations
   const activeOmzet = calculateTotal(activeData.sales, 'omzet');
@@ -130,6 +130,7 @@ const Dashboard = () => {
           trend={activeOmzet - prevOmzet} 
           color="brand" 
           trendLabel="kemarin" 
+          className="delay-100 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Profit Kotor" 
@@ -138,6 +139,7 @@ const Dashboard = () => {
           trend={activeProfit - prevProfit} 
           color="emerald" 
           trendLabel="kemarin" 
+          className="delay-200 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Unit Terjual" 
@@ -147,6 +149,7 @@ const Dashboard = () => {
           isCurrency={false}
           color="blue" 
           trendLabel="kemarin" 
+          className="delay-300 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Nilai Stok" 
@@ -154,6 +157,7 @@ const Dashboard = () => {
           icon={Package} 
           color="indigo" 
           subtitle="Berdasarkan data hari ini" 
+          className="delay-400 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Uang Aktif" 
@@ -162,6 +166,7 @@ const Dashboard = () => {
           trend={activeUang - prevUang} 
           color="emerald" 
           trendLabel="kemarin" 
+          className="delay-500 animate-fade-in-up"
         />
         <SummaryCard 
           title="Total Tagihan Aktif" 
@@ -170,41 +175,47 @@ const Dashboard = () => {
           trend={activeTagihan - prevTagihan} 
           color="red" 
           trendLabel="kemarin" 
+          className="delay-500 animate-fade-in-up"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Trend Omzet (30 Hari Terakhir)">
+        <ChartCard title="Trend Omzet (30 Hari Terakhir)" delayClass="delay-500">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData30Days}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#334155' : '#e2e8f0'} />
+              <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: theme === 'dark' ? '#94a3b8' : '#64748b' }} />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: theme === 'dark' ? '#94a3b8' : '#64748b' }}
                 tickFormatter={(value) => `Rp${(value/1000000)}M`}
               />
-              <Tooltip formatter={(value) => formatRupiah(value)} />
+              <Tooltip 
+                formatter={(value) => formatRupiah(value)} 
+                contentStyle={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff', borderColor: theme === 'dark' ? '#334155' : '#e2e8f0', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}
+              />
               <Line type="monotone" dataKey="omzet" stroke="#14b8a6" strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Unit Handphone Terjual (30 Hari Terakhir)">
+        <ChartCard title="Unit Handphone Terjual (30 Hari Terakhir)" delayClass="delay-500">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData30Days}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#334155' : '#e2e8f0'} />
+              <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: theme === 'dark' ? '#94a3b8' : '#64748b' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: theme === 'dark' ? '#94a3b8' : '#64748b' }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff', borderColor: theme === 'dark' ? '#334155' : '#e2e8f0', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}
+              />
+              <Legend wrapperStyle={{ color: theme === 'dark' ? '#f8fafc' : '#0f172a' }} />
               <Bar dataKey="handphone" name="Handphone" fill="#14b8a6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Komposisi Stok">
+        <ChartCard title="Komposisi Stok" delayClass="delay-500">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -215,18 +226,22 @@ const Dashboard = () => {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                stroke={theme === 'dark' ? '#1e293b' : '#fff'}
               >
                 {stockPieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => formatRupiah(value)} />
-              <Legend />
+              <Tooltip 
+                formatter={(value) => formatRupiah(value)} 
+                contentStyle={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff', borderColor: theme === 'dark' ? '#334155' : '#e2e8f0', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}
+              />
+              <Legend wrapperStyle={{ color: theme === 'dark' ? '#f8fafc' : '#0f172a' }} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <SectionCard title="Daftar Penjualan">
+        <SectionCard title="Daftar Penjualan" delayClass="delay-500">
           <PremiumTable 
             columns={recentSalesCols} 
             data={activeData.sales} 

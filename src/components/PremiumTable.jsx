@@ -11,12 +11,12 @@ const PremiumTable = ({ columns, data, emptyMessage = "Belum ada data", highligh
     <div className="overflow-x-auto -mx-5 md:-mx-6 px-5 md:px-6 pb-2">
       <table className="w-full text-left border-collapse min-w-[600px]">
         <thead>
-          <tr className="border-b border-slate-200">
+          <tr className="border-b border-slate-200 dark:border-slate-700">
             {columns.map((col, i) => (
               <th 
                 key={i} 
                 className={clsx(
-                  "py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-slate-50/50 first:rounded-tl-lg last:rounded-tr-lg",
+                  "py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/80 first:rounded-tl-lg last:rounded-tr-lg",
                   col.align === 'right' && "text-right",
                   col.align === 'center' && "text-center"
                 )}
@@ -33,8 +33,8 @@ const PremiumTable = ({ columns, data, emptyMessage = "Belum ada data", highligh
               <tr 
                 key={rowIndex} 
                 className={clsx(
-                  "border-b border-slate-100 last:border-0 hover:bg-slate-50/80 transition-colors group",
-                  isTotalRow && "bg-brand-50/50 hover:bg-brand-50 font-semibold"
+                  "border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group",
+                  isTotalRow && "bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-50 dark:hover:bg-brand-900/30 font-semibold"
                 )}
               >
                 {columns.map((col, colIndex) => (
@@ -44,7 +44,7 @@ const PremiumTable = ({ columns, data, emptyMessage = "Belum ada data", highligh
                       "py-4 px-4 text-sm align-middle whitespace-nowrap",
                       col.align === 'right' && "text-right",
                       col.align === 'center' && "text-center",
-                      isTotalRow ? "text-brand-900" : "text-slate-700"
+                      isTotalRow ? "text-brand-900 dark:text-brand-300" : "text-slate-700 dark:text-slate-300"
                     )}
                   >
                     {col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
