@@ -9,9 +9,6 @@ const CategoryBadge = ({ category }) => {
   if (category === 'Handphone' || category === 'HP Baru' || category === 'HP Second') {
     return <span className="inline-flex items-center px-2 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200"><span className="mr-1">📱</span> Handphone</span>;
   }
-  if (category === 'Aksesoris') {
-    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200"><span className="mr-1">🎧</span> Aksesoris</span>;
-  }
   if (category === 'TOTAL') {
     return <span className="inline-flex items-center px-2 py-1 rounded-md bg-brand-600 text-white text-xs font-bold border border-brand-700">TOTAL KESELURUHAN</span>;
   }
@@ -62,7 +59,6 @@ const SalesRecap = () => {
   const summaryTotals = useMemo(() => {
     const acc = {
       hpUnits: 0, hpOmzet: 0, hpProfit: 0,
-      aksesorisUnits: 0, aksesorisOmzet: 0, aksesorisProfit: 0,
       totalUnits: 0, totalOmzet: 0, totalProfit: 0
     };
 
@@ -79,10 +75,6 @@ const SalesRecap = () => {
         acc.hpUnits += units;
         acc.hpOmzet += omzet;
         acc.hpProfit += profit;
-      } else if (sale.category === 'Aksesoris') {
-        acc.aksesorisUnits += units;
-        acc.aksesorisOmzet += omzet;
-        acc.aksesorisProfit += profit;
       }
     });
 
@@ -91,7 +83,6 @@ const SalesRecap = () => {
 
   const summaryData = [
     { id: 'hp', kategori: 'Handphone', unit: summaryTotals.hpUnits, omzet: summaryTotals.hpOmzet, profit: summaryTotals.hpProfit },
-    { id: 'aks', kategori: 'Aksesoris', unit: summaryTotals.aksesorisUnits, omzet: summaryTotals.aksesorisOmzet, profit: summaryTotals.aksesorisProfit },
     { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
   ];
 

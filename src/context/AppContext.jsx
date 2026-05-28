@@ -8,7 +8,7 @@ const defaultDayData = {
   sales: [],
   stockAging: { '0-14': 0, '15-30': 0, '31-60': 0, '>60': 0 },
   bills: [],
-  stockCondition: { hpBaru: 0, hpSecond: 0, aksesoris: 0 },
+  stockCondition: { hpBaru: 0, hpSecond: 0 },
   cashPosition: { cash: 0, bank: 0, ewallet: 0, piutang: 0 },
   salesPerformance: []
 };

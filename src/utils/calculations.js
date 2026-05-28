@@ -12,7 +12,7 @@ export const calculateTotalUangAktif = (cashPosition) => {
 };
 
 export const calculateTotalStok = (stockCondition) => {
-  return Object.values(stockCondition).reduce((sum, val) => sum + (Number(val) || 0), 0);
+  return (Number(stockCondition.hpBaru) || 0) + (Number(stockCondition.hpSecond) || 0);
 };
 
 // Filter helpers

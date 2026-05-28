@@ -89,7 +89,6 @@ const DailySales = () => {
   const summaryTotals = useMemo(() => {
     const acc = {
       hpUnits: 0, hpOmzet: 0, hpProfit: 0,
-      aksesorisUnits: 0, aksesorisOmzet: 0, aksesorisProfit: 0,
       totalUnits: 0, totalOmzet: 0, totalProfit: 0
     };
 
@@ -106,10 +105,6 @@ const DailySales = () => {
         acc.hpUnits += units;
         acc.hpOmzet += omzet;
         acc.hpProfit += profit;
-      } else if (sale.category === 'Aksesoris') {
-        acc.aksesorisUnits += units;
-        acc.aksesorisOmzet += omzet;
-        acc.aksesorisProfit += profit;
       }
     });
 
@@ -118,7 +113,6 @@ const DailySales = () => {
 
   const summaryData = [
     { id: 'hp', kategori: 'Handphone', unit: summaryTotals.hpUnits, omzet: summaryTotals.hpOmzet, profit: summaryTotals.hpProfit },
-    { id: 'aks', kategori: 'Aksesoris', unit: summaryTotals.aksesorisUnits, omzet: summaryTotals.aksesorisOmzet, profit: summaryTotals.aksesorisProfit },
     { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
   ];
 
@@ -161,7 +155,6 @@ const DailySales = () => {
                 >
                   <option value="HP Baru">HP Baru</option>
                   <option value="HP Second">HP Second</option>
-                  <option value="Aksesoris">Aksesoris</option>
                 </select>
               </div>
               <div>

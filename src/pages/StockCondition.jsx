@@ -23,7 +23,6 @@ const StockCondition = () => {
     updateActiveData('stockCondition', {
       hpBaru: parseNumber(formData.hpBaru),
       hpSecond: parseNumber(formData.hpSecond),
-      aksesoris: parseNumber(formData.aksesoris),
     });
     setIsEditing(false);
   };
@@ -31,9 +30,8 @@ const StockCondition = () => {
   const totalStok = calculateTotalStok(stockCondition);
 
   const pieData = [
-    { name: 'HP Baru', value: stockCondition.hpBaru },
-    { name: 'HP Second', value: stockCondition.hpSecond },
-    { name: 'Aksesoris', value: stockCondition.aksesoris },
+    { name: 'HP Baru', value: stockCondition.hpBaru || 0 },
+    { name: 'HP Second', value: stockCondition.hpSecond || 0 },
   ];
 
   return (
@@ -60,17 +58,15 @@ const StockCondition = () => {
           </div>
 
           <div className="space-y-5">
-            {Object.keys(stockCondition).map((key) => {
+            {['hpBaru', 'hpSecond'].map((key) => {
               const labels = {
                 hpBaru: 'HP Baru',
                 hpSecond: 'HP Second',
-                aksesoris: 'Aksesoris'
               };
               
               const icons = {
                 hpBaru: '📦',
                 hpSecond: '🔄',
-                aksesoris: '🎧'
               };
 
               return (
@@ -88,7 +84,7 @@ const StockCondition = () => {
                     />
                   ) : (
                     <span className="font-bold text-xl text-slate-800">
-                      {formatRupiah(stockCondition[key])}
+                      {formatRupiah(stockCondition[key] || 0)}
                     </span>
                   )}
                 </div>

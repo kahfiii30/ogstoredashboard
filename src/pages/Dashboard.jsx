@@ -100,7 +100,6 @@ const Dashboard = () => {
 
   const stockPieData = [
     { name: 'Handphone', value: (activeData.stockCondition.hpBaru || 0) + (activeData.stockCondition.hpSecond || 0) },
-    { name: 'Aksesoris', value: activeData.stockCondition.aksesoris || 0 },
   ];
 
   const recentSalesCols = [
