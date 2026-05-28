@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, formatDate } from '../utils/format';
 import { calculateMargin, filterSalesByDateRange, calculateTotal, calculateTotalStok, calculateTotalUangAktif } from '../utils/calculations';
-import { Download, ShieldCheck, ShieldAlert, Calendar, CalendarDays, Users } from 'lucide-react';
+import { Download, ShieldCheck, ShieldAlert, Calendar, CalendarDays, Users, Upload, Database } from 'lucide-react';
 import DataTable from '../components/DataTable';
 import clsx from 'clsx';
 
@@ -111,6 +111,47 @@ const Reports = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const exportDatabase = () => {
+    if (!db) {
+      alert('Tidak ada data untuk dibackup.');
+      return;
+    }
+    const jsonString = JSON.stringify(db, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `backup_ogstore_${todayStr}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const importDatabase = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedDb = JSON.parse(event.target.result);
+        if (typeof importedDb === 'object' && importedDb !== null) {
+          if (window.confirm('PERINGATAN: Mengimpor data akan MENIMPA semua data yang ada saat ini. Anda yakin ingin melanjutkan?')) {
+            localStorage.setItem('og_store_daily_db', JSON.stringify(importedDb));
+            window.location.reload();
+          }
+        } else {
+          alert('Format file tidak valid.');
+        }
+      } catch (err) {
+        alert('Gagal membaca file JSON. Pastikan file tersebut adalah hasil backup aplikasi ini.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = null;
   };
 
   // --- SALES PERFORMANCE COLUMNS & DATA ---
@@ -313,6 +354,36 @@ const Reports = () => {
             getRowClass={(row) => row.isTotal ? "bg-emerald-50 hover:bg-emerald-100" : ""}
           />
         )}
+      </div>
+
+      <div className="card p-6 mt-6 border-t-4 border-t-slate-800">
+        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+          <Database className="w-5 h-5 text-slate-700 mr-2" />
+          Backup & Restore Database
+        </h3>
+        <p className="text-sm text-slate-500 mb-4">
+          Karena aplikasi ini menyimpan data di browser (Local Storage), data di Localhost (komputer Anda) akan berbeda dengan data di Vercel (online).
+          Gunakan fitur ini untuk memindahkan data antar perangkat atau melakukan backup berkala.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button onClick={exportDatabase} className="btn-primary bg-slate-800 hover:bg-slate-900 flex items-center justify-center">
+            <Download className="w-4 h-4 mr-2" />
+            Download Backup (.json)
+          </button>
+          
+          <div className="relative">
+            <input 
+              type="file" 
+              accept=".json" 
+              onChange={importDatabase}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <button className="btn-secondary w-full flex items-center justify-center border-slate-300 text-slate-700 hover:bg-slate-50">
+              <Upload className="w-4 h-4 mr-2" />
+              Restore Data (.json)
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
