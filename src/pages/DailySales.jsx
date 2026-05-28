@@ -14,9 +14,15 @@ const DailySales = () => {
     category: 'HP Baru',
     units: '',
     omzet: '',
-    profit: '',
+    hpp: '',
     notes: ''
   });
+
+  const calculatedProfit = useMemo(() => {
+    const o = parseNumber(formData.omzet);
+    const h = parseNumber(formData.hpp);
+    return o - h;
+  }, [formData.omzet, formData.hpp]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -29,7 +35,8 @@ const DailySales = () => {
       category: formData.category,
       units: parseNumber(formData.units),
       omzet: parseNumber(formData.omzet),
-      profit: parseNumber(formData.profit),
+      hpp: parseNumber(formData.hpp),
+      profit: calculatedProfit,
       notes: formData.notes
     };
 
@@ -43,11 +50,14 @@ const DailySales = () => {
     
     updateActiveData('sales', newSales);
     
-    setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', profit: '', notes: '' });
+    setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', hpp: '', notes: '' });
   };
 
   const handleEdit = (row) => {
-    setFormData({ ...row });
+    setFormData({ 
+      ...row, 
+      hpp: row.hpp !== undefined ? row.hpp : (row.omzet - row.profit) 
+    });
     setIsEditing(true);
   };
 
@@ -66,8 +76,7 @@ const DailySales = () => {
   // Group by category for Summary
   const summaryTotals = useMemo(() => {
     const acc = {
-      hpBaruUnits: 0, hpBaruOmzet: 0, hpBaruProfit: 0,
-      hpSecondUnits: 0, hpSecondOmzet: 0, hpSecondProfit: 0,
+      hpUnits: 0, hpOmzet: 0, hpProfit: 0,
       aksesorisUnits: 0, aksesorisOmzet: 0, aksesorisProfit: 0,
       totalUnits: 0, totalOmzet: 0, totalProfit: 0
     };
@@ -81,14 +90,10 @@ const DailySales = () => {
       acc.totalOmzet += omzet;
       acc.totalProfit += profit;
 
-      if (sale.category === 'HP Baru') {
-        acc.hpBaruUnits += units;
-        acc.hpBaruOmzet += omzet;
-        acc.hpBaruProfit += profit;
-      } else if (sale.category === 'HP Second') {
-        acc.hpSecondUnits += units;
-        acc.hpSecondOmzet += omzet;
-        acc.hpSecondProfit += profit;
+      if (sale.category === 'HP Baru' || sale.category === 'HP Second') {
+        acc.hpUnits += units;
+        acc.hpOmzet += omzet;
+        acc.hpProfit += profit;
       } else if (sale.category === 'Aksesoris') {
         acc.aksesorisUnits += units;
         acc.aksesorisOmzet += omzet;
@@ -100,8 +105,7 @@ const DailySales = () => {
   }, [sales]);
 
   const summaryData = [
-    { id: 'hpbaru', kategori: 'HP Baru', unit: summaryTotals.hpBaruUnits, omzet: summaryTotals.hpBaruOmzet, profit: summaryTotals.hpBaruProfit },
-    { id: 'hpsec', kategori: 'HP Second', unit: summaryTotals.hpSecondUnits, omzet: summaryTotals.hpSecondOmzet, profit: summaryTotals.hpSecondProfit },
+    { id: 'hp', kategori: 'Handphone', unit: summaryTotals.hpUnits, omzet: summaryTotals.hpOmzet, profit: summaryTotals.hpProfit },
     { id: 'aks', kategori: 'Aksesoris', unit: summaryTotals.aksesorisUnits, omzet: summaryTotals.aksesorisOmzet, profit: summaryTotals.aksesorisProfit },
     { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
   ];
@@ -159,7 +163,7 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Omzet (Rp)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Penjualan / Omzet (Rp)</label>
                 <input 
                   type="number" 
                   className="input-field"
@@ -169,14 +173,20 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Profit Kotor (Rp)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">HPP / Modal (Rp)</label>
                 <input 
                   type="number" 
                   className="input-field"
-                  value={formData.profit}
-                  onChange={e => setFormData({...formData, profit: e.target.value})}
+                  value={formData.hpp}
+                  onChange={e => setFormData({...formData, hpp: e.target.value})}
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Laba / Profit Kotor (Rp) - <i>Otomatis</i></label>
+                <div className="input-field bg-emerald-50 text-emerald-700 font-bold border-emerald-200">
+                  {formatRupiah(calculatedProfit)}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Catatan</label>
@@ -198,7 +208,7 @@ const DailySales = () => {
                     className="btn-secondary"
                     onClick={() => {
                       setIsEditing(false);
-                      setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', profit: '', notes: '' });
+                      setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', hpp: '', notes: '' });
                     }}
                   >
                     Batal

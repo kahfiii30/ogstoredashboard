@@ -74,38 +74,37 @@ const Dashboard = () => {
     const dataMap = {};
     const todayDate = new Date();
     
-    // Initialize map for last 30 days
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(todayDate);
-      d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().split('T')[0];
-      dataMap[dStr] = { date: dStr, displayDate: d.getDate() + '/' + (d.getMonth()+1), omzet: 0, hpBaru: 0, hpSecond: 0 };
-    }
-
-    if (db) {
-      Object.keys(db).forEach(dateKey => {
-        if (dataMap[dateKey]) {
-          const daySales = db[dateKey].sales || [];
-          daySales.forEach(sale => {
-            dataMap[dateKey].omzet += Number(sale.omzet);
-            if (sale.category === 'HP Baru') dataMap[dateKey].hpBaru += Number(sale.units);
-            if (sale.category === 'HP Second') dataMap[dateKey].hpSecond += Number(sale.units);
-          });
-        }
-      });
-    }
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(todayDate);
+        d.setDate(d.getDate() - i);
+        const dStr = d.toISOString().split('T')[0];
+        dataMap[dStr] = { date: dStr, displayDate: d.getDate() + '/' + (d.getMonth()+1), omzet: 0, handphone: 0 };
+      }
+  
+      if (db) {
+        Object.keys(db).forEach(dateKey => {
+          if (dataMap[dateKey]) {
+            const daySales = db[dateKey].sales || [];
+            daySales.forEach(sale => {
+              dataMap[dateKey].omzet += Number(sale.omzet);
+              if (sale.category === 'HP Baru' || sale.category === 'HP Second') {
+                dataMap[dateKey].handphone += Number(sale.units);
+              }
+            });
+          }
+        });
+      }
 
     return Object.values(dataMap);
   }, [db]);
 
   const stockPieData = [
-    { name: 'HP Baru', value: activeData.stockCondition.hpBaru },
-    { name: 'HP Second', value: activeData.stockCondition.hpSecond },
-    { name: 'Aksesoris', value: activeData.stockCondition.aksesoris },
+    { name: 'Handphone', value: (activeData.stockCondition.hpBaru || 0) + (activeData.stockCondition.hpSecond || 0) },
+    { name: 'Aksesoris', value: activeData.stockCondition.aksesoris || 0 },
   ];
 
   const recentSalesCols = [
-    { header: 'Kategori', accessor: 'category' },
+    { header: 'Kategori', accessor: 'category', render: (val) => (val === 'HP Baru' || val === 'HP Second') ? 'Handphone' : val },
     { header: 'Unit', accessor: 'units' },
     { header: 'Omzet', accessor: 'omzet', render: (val) => formatRupiah(val) },
     { header: 'Profit Kotor', accessor: 'profit', render: (val) => formatRupiah(val) },
@@ -238,7 +237,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Unit HP Baru vs HP Second (30 Hari Terakhir)">
+        <ChartCard title="Unit Handphone Terjual (30 Hari Terakhir)">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData30Days}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -246,8 +245,7 @@ const Dashboard = () => {
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="hpBaru" name="HP Baru" fill="#14b8a6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="hpSecond" name="HP Second" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="handphone" name="Handphone" fill="#14b8a6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
