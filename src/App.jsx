@@ -12,8 +12,22 @@ import Reports from './pages/Reports';
 import SalesPerformance from './pages/SalesPerformance';
 
 import { AppProvider } from './context/AppContext';
+import Login from './pages/Login';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    return localStorage.getItem('og_auth') === 'true';
+  });
+
+  const handleLogin = () => {
+    localStorage.setItem('og_auth', 'true');
+    setIsAuthenticated(true);
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <AppProvider>
       <BrowserRouter>

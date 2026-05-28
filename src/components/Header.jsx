@@ -1,10 +1,15 @@
 import React from 'react';
-import { Menu, Bell, UserCircle } from 'lucide-react';
+import { Menu, Bell, UserCircle, LogOut } from 'lucide-react';
 import { formatDate } from '../utils/format';
 import ActiveDatePicker from './ActiveDatePicker';
 
 const Header = () => {
-  const today = new Date().toISOString();
+  const handleLogout = () => {
+    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+      localStorage.removeItem('og_auth');
+      window.location.reload();
+    }
+  };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-10 flex-shrink-0">
@@ -25,9 +30,13 @@ const Header = () => {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
         
-        <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold border border-brand-200 cursor-pointer">
-          <UserCircle className="w-6 h-6" />
-        </div>
+        <button 
+          onClick={handleLogout}
+          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors relative"
+          title="Keluar"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </div>
     </header>
   );
