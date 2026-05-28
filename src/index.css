@@ -6,8 +6,9 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-brand-500 selection:text-white;
     font-family: 'Plus Jakarta Sans', sans-serif;
+    background-image: radial-gradient(circle at top right, rgba(37, 99, 235, 0.03), transparent 40%), radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.03), transparent 40%);
   }
 }
 
@@ -23,39 +24,39 @@
     transform: translateY(15px);
   }
 
-  /* Cards with glass feel and hover lift */
+  /* Cards with premium glass feel and soft hover */
   .card {
-    @apply bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/70 overflow-hidden transition-all duration-300 animate-fade-in-up;
+    @apply bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden transition-all duration-500 animate-fade-in-up;
   }
   .card:hover {
-    @apply shadow-lg border-slate-300/80 transform -translate-y-1;
+    @apply shadow-[0_8px_30px_-4px_rgba(37,99,235,0.08)] border-white/80 transform -translate-y-1 bg-white/90;
   }
 
-  /* Inputs */
+  /* Premium Inputs */
   .input-field {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 
-           focus:bg-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 
-           outline-none transition-all duration-300 hover:border-slate-300;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 
+           focus:bg-white focus:ring-4 focus:ring-brand-500/15 focus:border-brand-500 
+           outline-none transition-all duration-300 hover:border-slate-300 shadow-sm placeholder:text-slate-400;
   }
 
-  /* Buttons */
+  /* Premium Buttons */
   .btn-primary {
-    @apply relative overflow-hidden px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 
-           text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-brand-500 hover:to-brand-400
-           transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
+    @apply relative overflow-hidden px-6 py-3 bg-gradient-to-r from-brand-600 via-brand-500 to-brand-600 bg-[length:200%_auto]
+           text-white rounded-xl font-bold shadow-[0_4px_15px_-3px_rgba(37,99,235,0.4)] hover:shadow-[0_8px_25px_-4px_rgba(37,99,235,0.5)] 
+           hover:animate-gradient-x transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
            focus:ring-4 focus:ring-brand-500/30 outline-none flex items-center justify-center;
   }
   
   .btn-secondary {
-    @apply px-5 py-2.5 bg-white text-slate-700 rounded-xl font-bold border border-slate-200 
+    @apply px-6 py-3 bg-white text-slate-700 rounded-xl font-bold border border-slate-200 
            shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md 
            transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
            focus:ring-4 focus:ring-slate-500/20 outline-none flex items-center justify-center;
   }
   
   .btn-danger {
-    @apply px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white 
-           rounded-xl font-bold shadow-md hover:shadow-lg hover:from-red-500 hover:to-red-400
+    @apply px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white 
+           rounded-xl font-bold shadow-[0_4px_15px_-3px_rgba(220,38,38,0.4)] hover:shadow-[0_8px_25px_-4px_rgba(220,38,38,0.5)] 
            transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
            focus:ring-4 focus:ring-red-500/30 outline-none flex items-center justify-center;
   }

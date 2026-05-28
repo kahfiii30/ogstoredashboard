@@ -28,10 +28,12 @@ const navItems = [
 
 const Sidebar = () => {
   return (
-    <div className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col flex-shrink-0 transition-all duration-300">
-      <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
-        <Smartphone className="w-6 h-6 text-brand-400 mr-2" />
-        <span className="text-white font-bold text-lg tracking-wide">OG Dashboard</span>
+    <div className="w-64 bg-slate-900 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300 hidden md:flex flex-col flex-shrink-0 transition-all duration-300 shadow-2xl relative z-30">
+      <div className="h-16 flex items-center px-6 border-b border-white/10 bg-slate-950/50 backdrop-blur-sm">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)] mr-3">
+          <Smartphone className="w-5 h-5 text-white" />
+        </div>
+        <span className="text-white font-bold text-lg tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">OG Dashboard</span>
       </div>
       
       <div className="flex-1 overflow-y-auto py-4">
@@ -43,16 +45,20 @@ const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => clsx(
-                  'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group',
+                  'flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 group relative overflow-hidden',
                   isActive 
-                    ? 'bg-brand-600 text-white' 
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-brand-600/10 text-brand-400 border border-brand-500/20 shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]' 
+                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 hover:shadow-sm'
                 )}
               >
                 <Icon className={clsx(
-                  'w-5 h-5 mr-3 flex-shrink-0 transition-colors',
+                  'w-5 h-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110',
+                  isActive ? 'text-brand-500 drop-shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'text-slate-500 group-hover:text-slate-300'
                 )} />
                 {item.label}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
+                )}
               </NavLink>
             );
           })}

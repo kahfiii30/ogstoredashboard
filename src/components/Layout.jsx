@@ -5,7 +5,7 @@ import { Outlet } from 'react-router-dom';
 
 const Layout = () => {
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-screen bg-transparent font-sans">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />

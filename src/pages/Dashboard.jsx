@@ -138,7 +138,7 @@ const Dashboard = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="card p-5 bg-white border-brand-100 hover:border-brand-300">
+        <div className="card p-5 border-brand-100 hover:border-brand-300">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-brand-100 text-brand-600 rounded-lg"><DollarSign className="w-5 h-5" /></div>
             <h3 className="font-semibold text-slate-600">Total Omzet</h3>
@@ -165,7 +165,7 @@ const Dashboard = () => {
           <TrendIndicator current={activeUnits} previous={calculateTotal(previousData.sales, 'units')} isCurrency={false} />
         </div>
 
-        <div className="card p-5 bg-white border-indigo-100 hover:border-indigo-300">
+        <div className="card p-5 border-indigo-100 hover:border-indigo-300">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Package className="w-5 h-5" /></div>
             <h3 className="font-semibold text-slate-600">Total Nilai Stok</h3>
@@ -183,7 +183,7 @@ const Dashboard = () => {
           <TrendIndicator current={activeUang} previous={prevUang} />
         </div>
 
-        <div className="card p-5 bg-white border-red-100 hover:border-red-300">
+        <div className="card p-5 border-red-100 hover:border-red-300">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-red-100 text-red-600 rounded-lg"><CreditCard className="w-5 h-5" /></div>
             <h3 className="font-semibold text-slate-600">Total Tagihan Aktif</h3>
@@ -208,7 +208,7 @@ const Dashboard = () => {
           <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeSalesPerfProfit)}</p>
         </div>
 
-        <div className="card p-5 bg-white border-amber-100 hover:border-amber-300">
+        <div className="card p-5 border-amber-100 hover:border-amber-300">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><Award className="w-5 h-5" /></div>
             <h3 className="font-semibold text-slate-600">Sales Terbaik (Profit)</h3>
