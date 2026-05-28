@@ -6,8 +6,11 @@ import DataTable from '../components/DataTable';
 import clsx from 'clsx';
 
 const CategoryBadge = ({ category }) => {
-  if (category === 'Handphone' || category === 'HP Baru' || category === 'HP Second') {
-    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200"><span className="mr-1">📱</span> Handphone</span>;
+  if (category === 'HP Baru') {
+    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200"><span className="mr-1">📦</span> HP Baru</span>;
+  }
+  if (category === 'HP Second') {
+    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200"><span className="mr-1">🔄</span> HP Second</span>;
   }
   if (category === 'TOTAL') {
     return <span className="inline-flex items-center px-2 py-1 rounded-md bg-brand-600 text-white text-xs font-bold border border-brand-700">TOTAL KESELURUHAN</span>;
@@ -58,7 +61,8 @@ const SalesRecap = () => {
   // Group by category for Summary
   const summaryTotals = useMemo(() => {
     const acc = {
-      hpUnits: 0, hpOmzet: 0, hpProfit: 0,
+      hpBaruUnits: 0, hpBaruOmzet: 0, hpBaruProfit: 0,
+      hpSecondUnits: 0, hpSecondOmzet: 0, hpSecondProfit: 0,
       totalUnits: 0, totalOmzet: 0, totalProfit: 0
     };
 
@@ -71,10 +75,14 @@ const SalesRecap = () => {
       acc.totalOmzet += omzet;
       acc.totalProfit += profit;
 
-      if (sale.category === 'HP Baru' || sale.category === 'HP Second') {
-        acc.hpUnits += units;
-        acc.hpOmzet += omzet;
-        acc.hpProfit += profit;
+      if (sale.category === 'HP Baru') {
+        acc.hpBaruUnits += units;
+        acc.hpBaruOmzet += omzet;
+        acc.hpBaruProfit += profit;
+      } else if (sale.category === 'HP Second') {
+        acc.hpSecondUnits += units;
+        acc.hpSecondOmzet += omzet;
+        acc.hpSecondProfit += profit;
       }
     });
 
@@ -82,7 +90,8 @@ const SalesRecap = () => {
   }, [filteredSales]);
 
   const summaryData = [
-    { id: 'hp', kategori: 'Handphone', unit: summaryTotals.hpUnits, omzet: summaryTotals.hpOmzet, profit: summaryTotals.hpProfit },
+    { id: 'hpbaru', kategori: 'HP Baru', unit: summaryTotals.hpBaruUnits, omzet: summaryTotals.hpBaruOmzet, profit: summaryTotals.hpBaruProfit },
+    { id: 'hpsec', kategori: 'HP Second', unit: summaryTotals.hpSecondUnits, omzet: summaryTotals.hpSecondOmzet, profit: summaryTotals.hpSecondProfit },
     { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
   ];
 
@@ -90,13 +99,12 @@ const SalesRecap = () => {
   const detailData = useMemo(() => {
     const groups = {}; // Key format: date_category
     filteredSales.forEach(sale => {
-      const displayCategory = (sale.category === 'HP Baru' || sale.category === 'HP Second') ? 'Handphone' : sale.category;
-      const key = `${sale.date}_${displayCategory}`;
+      const key = `${sale.date}_${sale.category}`;
       if (!groups[key]) {
         groups[key] = {
           id: key,
           date: sale.date,
-          category: displayCategory,
+          category: sale.category,
           units: 0,
           omzet: 0,
           profit: 0,
