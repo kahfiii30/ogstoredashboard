@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer components {
+  /* Smooth Fade-in Animation */
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  /* Cards with glass feel and hover lift */
+  .card {
+    @apply bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/70 overflow-hidden transition-all duration-300 animate-fade-in-up;
+  }
+  .card:hover {
+    @apply shadow-lg border-slate-300/80 transform -translate-y-1;
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 
+           focus:bg-white focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 
+           outline-none transition-all duration-300 hover:border-slate-300;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply relative overflow-hidden px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 
+           text-white rounded-xl font-bold shadow-md hover:shadow-lg hover:from-brand-500 hover:to-brand-400
+           transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
+           focus:ring-4 focus:ring-brand-500/30 outline-none flex items-center justify-center;
+  }
+  
+  .btn-secondary {
+    @apply px-5 py-2.5 bg-white text-slate-700 rounded-xl font-bold border border-slate-200 
+           shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md 
+           transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
+           focus:ring-4 focus:ring-slate-500/20 outline-none flex items-center justify-center;
+  }
+  
+  .btn-danger {
+    @apply px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white 
+           rounded-xl font-bold shadow-md hover:shadow-lg hover:from-red-500 hover:to-red-400
+           transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-95
+           focus:ring-4 focus:ring-red-500/30 outline-none flex items-center justify-center;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered animation delays for list items/cards */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
