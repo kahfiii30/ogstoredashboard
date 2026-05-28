@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotal } from '../utils/calculations';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
+import PremiumTable from '../components/PremiumTable';
+import MoneyText from '../components/MoneyText';
+import Badge from '../components/Badge';
 import AlertBox from '../components/AlertBox';
+import ConfirmModal from '../components/ConfirmModal';
+import { AlertTriangle, CreditCard, CheckCircle } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { AlertTriangle } from 'lucide-react';
 
@@ -82,7 +89,7 @@ const Bills = () => {
 
   const columns = [
     { header: 'Distributor', accessor: 'distributor', render: (val, row) => (
-      <div className="flex items-center">
+      <div className="flex items-center font-medium">
         {val}
         {urgentBills.some(ub => ub.id === row.id) && (
           <AlertTriangle className="w-4 h-4 text-red-500 ml-2" />
@@ -91,19 +98,33 @@ const Bills = () => {
     )},
     { header: 'Jatuh Tempo', accessor: 'due_date', render: (val, row) => {
         const isUrgent = urgentBills.some(ub => ub.id === row.id);
-        return <span className={isUrgent ? 'text-red-600 font-bold' : ''}>{formatDate(val)}</span>;
+        if (isUrgent) {
+           return <Badge color="red">{formatDate(val)}</Badge>;
+        }
+        return <Badge color="slate">{formatDate(val)}</Badge>;
     }},
-    { header: 'Nominal', accessor: 'amount', render: (val) => formatRupiah(val) },
+    { header: 'Nominal', accessor: 'amount', align: 'right', render: (val) => <MoneyText value={val} /> },
     { header: 'Status', accessor: 'status', render: (val) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        val === 'Lunas' ? 'bg-emerald-100 text-emerald-700' :
-        val === 'Sebagian' ? 'bg-amber-100 text-amber-700' :
-        'bg-red-100 text-red-700'
-      }`}>
+      <Badge color={
+        val === 'Lunas' ? 'emerald' :
+        val === 'Sebagian' ? 'amber' :
+        'red'
+      }>
         {val}
-      </span>
+      </Badge>
     )},
-    { header: 'Catatan', accessor: 'notes' },
+    { header: 'Catatan', accessor: 'notes', render: (val) => <span className="text-slate-500 italic text-xs">{val || '-'}</span> },
+    { 
+      header: 'Aksi', 
+      accessor: 'id', 
+      align: 'center',
+      render: (_, row) => (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => handleEdit(row)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">Edit</button>
+          <button onClick={() => handleDelete(row)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">Hapus</button>
+        </div>
+      ) 
+    }
   ];
 
   // Sort bills: unpaid first, then by due date
@@ -113,16 +134,29 @@ const Bills = () => {
     return new Date(a.due_date) - new Date(b.due_date);
   });
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Tagihan / Tempo</h1>
-        <p className="text-slate-500">Kelola hutang distributor dan jatuh tempo untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
-      </div>
+  const totalLunas = calculateTotal(bills.filter(b => b.status === 'Lunas'), 'amount');
 
-      <div className="card p-6 bg-red-50 border-red-200">
-        <p className="text-sm font-medium text-red-600 mb-1">Total Tagihan Aktif (Belum Lunas)</p>
-        <h3 className="text-3xl font-bold text-red-900">{formatRupiah(totalActive)}</h3>
+  return (
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Tagihan / Tempo" 
+        subtitle="Kelola hutang distributor dan jatuh tempo."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <SummaryCard 
+          title="Total Tagihan Aktif (Belum Lunas)" 
+          value={totalActive} 
+          icon={CreditCard} 
+          color="red" 
+        />
+        <SummaryCard 
+          title="Total Tagihan Lunas" 
+          value={totalLunas} 
+          icon={CheckCircle} 
+          color="emerald" 
+        />
       </div>
 
       {urgentBills.length > 0 && (
@@ -135,10 +169,7 @@ const Bills = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-1">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">
-              {isEditing ? 'Edit Tagihan' : 'Tambah Tagihan'}
-            </h3>
+          <SectionCard title={isEditing ? 'Edit Tagihan' : 'Tambah Tagihan'}>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Distributor</label>
@@ -211,19 +242,16 @@ const Bills = () => {
                 )}
               </div>
             </form>
-          </div>
+          </SectionCard>
         </div>
 
         <div className="xl:col-span-2">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Daftar Tagihan</h3>
-            <DataTable 
+          <SectionCard title="Daftar Tagihan">
+            <PremiumTable 
               columns={columns} 
               data={sortedBills} 
-              onEdit={handleEdit}
-              onDelete={handleDelete}
             />
-          </div>
+          </SectionCard>
         </div>
       </div>
 

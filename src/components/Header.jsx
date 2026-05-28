@@ -12,13 +12,14 @@ const Header = () => {
   };
 
   return (
-    <header className="h-16 bg-white/70 backdrop-blur-lg border-b border-white/50 shadow-sm flex items-center justify-between px-4 md:px-6 z-20 flex-shrink-0 sticky top-0">
+    <header className="h-[72px] bg-white/80 backdrop-blur-lg border-b border-slate-200/60 shadow-sm flex items-center justify-between px-6 md:px-8 z-20 flex-shrink-0 sticky top-0">
       <div className="flex items-center">
-        <button className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg mr-2">
+        <button className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg mr-2 transition-colors">
           <Menu className="w-5 h-5" />
         </button>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 tracking-tight hidden sm:block">Overview</h2>
+        {/* Title is typically handled by PageHeader component on each page now */}
+        <div className="hidden sm:block">
+          <span className="text-sm font-medium text-slate-400">Selamat datang kembali!</span>
         </div>
       </div>
       

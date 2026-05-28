@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useApp } from '../context/AppContext';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
 import AlertBox from '../components/AlertBox';
 import ChartCard from '../components/ChartCard';
+import { Clock, CheckCircle, AlertTriangle, AlertOctagon } from 'lucide-react';
 
 const StockAging = () => {
   const { activeData, updateActiveData, activeDate } = useApp();
@@ -37,12 +41,15 @@ const StockAging = () => {
     { name: '>60 Hari', value: stockAging['>60'], color: '#ef4444' },
   ];
 
+  const totalAging = Object.values(stockAging).reduce((sum, val) => sum + Number(val), 0);
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Stok Aging</h1>
-        <p className="text-slate-500">Pantau umur stok untuk menjaga likuiditas tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
-      </div>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Stok Aging" 
+        subtitle="Pantau umur stok untuk menjaga likuiditas."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`}
+      />
 
       {isCritical && (
         <AlertBox 
@@ -52,16 +59,50 @@ const StockAging = () => {
         />
       )}
 
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-5">
+        <SummaryCard 
+          title="Total Stok Aging" 
+          value={totalAging} 
+          icon={Clock} 
+          color="brand" 
+        />
+        <SummaryCard 
+          title="0-14 Hari" 
+          value={stockAging['0-14']} 
+          icon={CheckCircle} 
+          color="emerald" 
+        />
+        <SummaryCard 
+          title="15-30 Hari" 
+          value={stockAging['15-30']} 
+          icon={Clock} 
+          color="blue" 
+        />
+        <SummaryCard 
+          title="31-60 Hari" 
+          value={stockAging['31-60']} 
+          icon={AlertTriangle} 
+          color="amber" 
+        />
+        <SummaryCard 
+          title=">60 Hari" 
+          value={stockAging['>60']} 
+          icon={AlertOctagon} 
+          color="red" 
+        />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-5">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-slate-800">Nilai Stok Aging</h3>
-            {!isEditing && (
+        <SectionCard 
+          title="Nilai Stok Aging"
+          action={
+            !isEditing && (
               <button onClick={() => setIsEditing(true)} className="btn-secondary text-sm">
                 Edit Nilai
               </button>
-            )}
-          </div>
+            )
+          }
+        >
 
           <div className="space-y-4">
             {Object.keys(stockAging).map((key) => {
@@ -106,7 +147,7 @@ const StockAging = () => {
               </div>
             )}
           </div>
-        </div>
+        </SectionCard>
 
         <ChartCard title="Grafik Umur Stok">
           <ResponsiveContainer width="100%" height="100%">

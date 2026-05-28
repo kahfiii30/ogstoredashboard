@@ -2,8 +2,15 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotal } from '../utils/calculations';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
+import PremiumTable from '../components/PremiumTable';
+import MoneyText from '../components/MoneyText';
+import Badge from '../components/Badge';
 import ConfirmModal from '../components/ConfirmModal';
+import { Package, DollarSign, TrendingUp, Percent } from 'lucide-react';
+import clsx from 'clsx';
 
 const DailySales = () => {
   const { activeData, updateActiveData, activeDate } = useApp();
@@ -116,34 +123,84 @@ const DailySales = () => {
     { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
   ];
 
+  const marginPercentage = summaryTotals.totalOmzet > 0 
+    ? ((summaryTotals.totalProfit / summaryTotals.totalOmzet) * 100).toFixed(2)
+    : 0;
+
   const summaryCols = [
-    { header: 'Kategori', accessor: 'kategori', render: (val, row) => <span className={row.isTotal ? "font-bold" : ""}>{val}</span> },
-    { header: 'Unit', accessor: 'unit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg" : ""}>{val}</span> },
-    { header: 'Omzet', accessor: 'omzet', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg text-brand-700" : "text-brand-600 font-medium"}>{formatRupiah(val)}</span> },
-    { header: 'Profit Kotor', accessor: 'profit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg text-emerald-700" : "text-emerald-600 font-medium"}>{formatRupiah(val)}</span> },
+    { header: 'Kategori', accessor: 'kategori', render: (val, row) => <span className="font-semibold">{val}</span> },
+    { header: 'Unit', accessor: 'unit', align: 'center' },
+    { header: 'Omzet', accessor: 'omzet', align: 'right', render: (val) => <MoneyText value={val} /> },
+    { header: 'Profit Kotor', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
   ];
 
   const columns = [
-    { header: 'Kategori', accessor: 'category', render: (val) => <span className="font-medium text-slate-700">{val}</span> },
-    { header: 'Unit', accessor: 'units' },
-    { header: 'Omzet', accessor: 'omzet', render: (val) => <span className="text-brand-600">{formatRupiah(val)}</span> },
-    { header: 'Profit', accessor: 'profit', render: (val) => <span className="text-emerald-600">{formatRupiah(val)}</span> },
+    { 
+      header: 'Kategori', 
+      accessor: 'category', 
+      render: (val) => (
+        <Badge color={val === 'HP Baru' ? 'brand' : val === 'HP Second' ? 'amber' : 'slate'}>
+          {val}
+        </Badge>
+      ) 
+    },
+    { header: 'Unit', accessor: 'units', align: 'center' },
+    { header: 'Omzet', accessor: 'omzet', align: 'right', render: (val) => <MoneyText value={val} /> },
+    { header: 'Profit', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
     { header: 'Catatan', accessor: 'notes', render: (val) => <span className="text-slate-500 italic text-xs">{val || '-'}</span> },
+    { 
+      header: 'Aksi', 
+      accessor: 'id', 
+      align: 'center',
+      render: (_, row) => (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => handleEdit(row)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">Edit</button>
+          <button onClick={() => handleDelete(row)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">Hapus</button>
+        </div>
+      ) 
+    }
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Penjualan Harian</h1>
-        <p className="text-slate-500">Catat dan kelola transaksi toko untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Penjualan Harian" 
+        subtitle="Catat dan kelola transaksi toko untuk hari ini."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`} 
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <SummaryCard 
+          title="Total Unit" 
+          value={summaryTotals.totalUnits} 
+          icon={Package} 
+          isCurrency={false}
+          color="blue" 
+        />
+        <SummaryCard 
+          title="Total Omzet" 
+          value={summaryTotals.totalOmzet} 
+          icon={DollarSign} 
+          color="brand" 
+        />
+        <SummaryCard 
+          title="Total Profit" 
+          value={summaryTotals.totalProfit} 
+          icon={TrendingUp} 
+          color="emerald" 
+        />
+        <SummaryCard 
+          title="Margin Kotor" 
+          value={`${marginPercentage}%`} 
+          icon={Percent} 
+          isCurrency={false}
+          color="indigo" 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">
-              {isEditing ? 'Edit Penjualan' : 'Tambah Penjualan'}
-            </h3>
+          <SectionCard title={isEditing ? 'Edit Penjualan' : 'Tambah Penjualan'}>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
@@ -223,34 +280,26 @@ const DailySales = () => {
                 )}
               </div>
             </form>
-          </div>
+          </SectionCard>
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Ringkasan Penjualan</h3>
-            <DataTable 
+          <SectionCard title="Ringkasan Penjualan">
+            <PremiumTable 
               columns={summaryCols} 
               data={summaryData} 
-              keyField="id" 
-              getRowClass={(row) => row.isTotal ? "bg-brand-50 hover:bg-brand-100" : ""}
+              highlightTotalRow={true}
             />
-          </div>
+          </SectionCard>
 
-          <div className="card p-5">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-slate-800">Riwayat Penjualan</h3>
-            </div>
-            
-            <DataTable 
-              columns={columns} 
-              data={sales}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          </div>
-        </div>
       </div>
+
+      <SectionCard title="Riwayat Penjualan">
+        <PremiumTable 
+          columns={columns} 
+          data={sales}
+        />
+      </SectionCard>
 
       <ConfirmModal 
         isOpen={!!itemToDelete}

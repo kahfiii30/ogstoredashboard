@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotalUangAktif } from '../utils/calculations';
-import { Banknote, Building2, Smartphone, Users } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
+import { Banknote, Building2, Smartphone, Users, Wallet } from 'lucide-react';
 
 const CashPosition = () => {
   const { activeData, updateActiveData, activeDate } = useApp();
@@ -36,35 +39,40 @@ const CashPosition = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Posisi Uang Aktif</h1>
-        <p className="text-slate-500">Pantau ketersediaan dana cair untuk operasional tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Posisi Uang Aktif" 
+        subtitle="Pantau ketersediaan dana cair untuk operasional."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`}
+      />
+
+      <div className="max-w-md">
+        <SummaryCard 
+          title="Total Uang Aktif" 
+          value={totalUangAktif} 
+          icon={Wallet} 
+          color="emerald" 
+        />
       </div>
 
-      <div className="card p-6 bg-emerald-50 border-emerald-200">
-        <p className="text-sm font-medium text-emerald-600 mb-1">Total Uang Aktif</p>
-        <h3 className="text-3xl font-bold text-emerald-900">{formatRupiah(totalUangAktif)}</h3>
-      </div>
-
-      <div className="card p-5 max-w-3xl">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-slate-800">Rincian Saldo</h3>
-          {!isEditing && (
+      <SectionCard 
+        title="Rincian Saldo"
+        action={
+          !isEditing && (
             <button onClick={() => setIsEditing(true)} className="btn-secondary text-sm">
               Edit Saldo
             </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          )
+        }
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
           {items.map((item) => (
-            <div key={item.key} className="p-4 border border-slate-200 rounded-xl bg-white flex flex-col">
-              <div className="flex items-center mb-3">
-                <div className={`p-2 rounded-lg ${item.bg} mr-3`}>
+            <div key={item.key} className="p-5 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col hover:border-brand-200 transition-colors">
+              <div className="flex items-center mb-4">
+                <div className={`p-3 rounded-xl ${item.bg} mr-4`}>
                   <item.icon className={`w-5 h-5 ${item.color}`} />
                 </div>
-                <span className="font-medium text-slate-600 text-sm">{item.label}</span>
+                <span className="font-semibold text-slate-600">{item.label}</span>
               </div>
               
               <div className="mt-auto">
@@ -76,7 +84,7 @@ const CashPosition = () => {
                     onChange={(e) => setFormData({ ...formData, [item.key]: e.target.value })}
                   />
                 ) : (
-                  <span className="font-bold text-xl text-slate-800">
+                  <span className="font-bold text-2xl text-slate-800 tracking-tight">
                     {formatRupiah(cashPosition[item.key])}
                   </span>
                 )}
@@ -86,7 +94,7 @@ const CashPosition = () => {
         </div>
 
         {isEditing && (
-          <div className="flex gap-3 pt-4 border-t border-slate-100">
+          <div className="flex gap-3 pt-5 border-t border-slate-100">
             <button onClick={handleSave} className="btn-primary">Simpan Perubahan</button>
             <button 
               onClick={() => {
@@ -99,7 +107,7 @@ const CashPosition = () => {
             </button>
           </div>
         )}
-      </div>
+      </SectionCard>
     </div>
   );
 };

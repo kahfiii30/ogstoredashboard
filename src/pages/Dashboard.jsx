@@ -17,30 +17,17 @@ import {
 import { useApp } from '../context/AppContext';
 import { formatRupiah, formatDate } from '../utils/format';
 import { calculateTotal, calculateTotalStok, calculateTotalUangAktif } from '../utils/calculations';
+import SectionCard from '../components/SectionCard';
 import SummaryCard from '../components/SummaryCard';
 import ChartCard from '../components/ChartCard';
 import AlertBox from '../components/AlertBox';
-import DataTable from '../components/DataTable';
+import PremiumTable from '../components/PremiumTable';
+import PageHeader from '../components/PageHeader';
+import MoneyText from '../components/MoneyText';
 
 const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b', '#ef4444'];
 
-const TrendIndicator = ({ current, previous, isCurrency = true }) => {
-  const diff = current - previous;
-  const isPositive = diff >= 0;
-  
-  if (previous === 0 && current === 0) return null;
 
-  return (
-    <div className={`flex items-center text-xs mt-2 font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-      {isPositive ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-      <span>
-        {isPositive ? 'Naik ' : 'Turun '}
-        {isCurrency ? formatRupiah(Math.abs(diff)) : Math.abs(diff)}
-        <span className="text-slate-400 ml-1 font-normal">dari {isCurrency ? formatRupiah(previous) : previous} kemarin</span>
-      </span>
-    </div>
-  );
-};
 
 const Dashboard = () => {
   const { activeData, previousData, activeDate, db } = useApp();
@@ -104,19 +91,17 @@ const Dashboard = () => {
 
   const recentSalesCols = [
     { header: 'Kategori', accessor: 'category', render: (val) => (val === 'HP Baru' || val === 'HP Second') ? 'Handphone' : val },
-    { header: 'Unit', accessor: 'units' },
-    { header: 'Omzet', accessor: 'omzet', render: (val) => formatRupiah(val) },
-    { header: 'Profit Kotor', accessor: 'profit', render: (val) => formatRupiah(val) },
+    { header: 'Unit', accessor: 'units', align: 'center' },
+    { header: 'Omzet', accessor: 'omzet', align: 'right', render: (val) => <MoneyText value={val} /> },
+    { header: 'Profit Kotor', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Dashboard Utama</h1>
-          <p className="text-slate-500">Ringkasan bisnis Anda untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Dashboard Utama" 
+        subtitle={`Ringkasan bisnis Anda untuk tanggal ${formatDate(activeDate)}.`} 
+      />
 
       {(isAgingCritical || isCashflowCritical) && (
         <div className="space-y-3">
@@ -137,85 +122,55 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="card p-5 border-brand-100 hover:border-brand-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-brand-100 text-brand-600 rounded-lg"><DollarSign className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Omzet</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeOmzet)}</p>
-          <TrendIndicator current={activeOmzet} previous={prevOmzet} />
-        </div>
-
-        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><TrendingUp className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Profit Kotor</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeProfit)}</p>
-          <TrendIndicator current={activeProfit} previous={prevProfit} />
-        </div>
-
-        <div className="card p-5 bg-white border-blue-100 hover:border-blue-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Package className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Unit Terjual</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{activeUnits} Unit</p>
-          <TrendIndicator current={activeUnits} previous={calculateTotal(previousData.sales, 'units')} isCurrency={false} />
-        </div>
-
-        <div className="card p-5 border-indigo-100 hover:border-indigo-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Package className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Nilai Stok</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeStok)}</p>
-          <p className="text-xs text-slate-400 mt-2">Berdasarkan data hari ini</p>
-        </div>
-
-        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><Wallet className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Uang Aktif</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeUang)}</p>
-          <TrendIndicator current={activeUang} previous={prevUang} />
-        </div>
-
-        <div className="card p-5 border-red-100 hover:border-red-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-red-100 text-red-600 rounded-lg"><CreditCard className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Total Tagihan Aktif</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeTagihan)}</p>
-          <TrendIndicator current={activeTagihan} previous={prevTagihan} />
-        </div>
-
-        <div className="card p-5 bg-white border-blue-100 hover:border-blue-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Users className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Performa Sales (Unit)</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{activeSalesPerfUnit} Unit</p>
-        </div>
-
-        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><TrendingUp className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Performa Sales (Profit)</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeSalesPerfProfit)}</p>
-        </div>
-
-        <div className="card p-5 border-amber-100 hover:border-amber-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><Award className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600">Sales Terbaik (Profit)</h3>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 truncate">{bestSalesPerf ? bestSalesPerf.name : '-'}</p>
-          <p className="text-xs text-slate-500 mt-2">{bestSalesPerf ? formatRupiah(bestSalesPerf.profit) : '-'}</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <SummaryCard 
+          title="Total Omzet" 
+          value={activeOmzet} 
+          icon={DollarSign} 
+          trend={activeOmzet - prevOmzet} 
+          color="brand" 
+          trendLabel="kemarin" 
+        />
+        <SummaryCard 
+          title="Total Profit Kotor" 
+          value={activeProfit} 
+          icon={TrendingUp} 
+          trend={activeProfit - prevProfit} 
+          color="emerald" 
+          trendLabel="kemarin" 
+        />
+        <SummaryCard 
+          title="Total Unit Terjual" 
+          value={activeUnits} 
+          icon={Package} 
+          trend={activeUnits - calculateTotal(previousData.sales, 'units')} 
+          isCurrency={false}
+          color="blue" 
+          trendLabel="kemarin" 
+        />
+        <SummaryCard 
+          title="Total Nilai Stok" 
+          value={activeStok} 
+          icon={Package} 
+          color="indigo" 
+          subtitle="Berdasarkan data hari ini" 
+        />
+        <SummaryCard 
+          title="Total Uang Aktif" 
+          value={activeUang} 
+          icon={Wallet} 
+          trend={activeUang - prevUang} 
+          color="emerald" 
+          trendLabel="kemarin" 
+        />
+        <SummaryCard 
+          title="Total Tagihan Aktif" 
+          value={activeTagihan} 
+          icon={CreditCard} 
+          trend={activeTagihan - prevTagihan} 
+          color="red" 
+          trendLabel="kemarin" 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -271,18 +226,12 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </ChartCard>
 
-        <div className="card p-5">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h3 className="text-lg font-bold text-slate-800">Daftar Penjualan</h3>
-              <p className="text-sm text-slate-500 mt-1">{formatDate(activeDate)}</p>
-            </div>
-          </div>
-          <DataTable 
+        <SectionCard title="Daftar Penjualan">
+          <PremiumTable 
             columns={recentSalesCols} 
             data={activeData.sales} 
           />
-        </div>
+        </SectionCard>
       </div>
     </div>
   );

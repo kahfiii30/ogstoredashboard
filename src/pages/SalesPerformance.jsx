@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
+import PremiumTable from '../components/PremiumTable';
+import MoneyText from '../components/MoneyText';
 import ConfirmModal from '../components/ConfirmModal';
 import ChartCard from '../components/ChartCard';
-import SummaryCard from '../components/SummaryCard';
 import { Users, TrendingUp, Award, UserPlus, FileSpreadsheet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import clsx from 'clsx';
@@ -101,60 +104,73 @@ const SalesPerformance = () => {
   }));
 
   const mainColumns = [
-    { header: 'Nama', accessor: 'name', render: (val, row) => <span className={row.isTotal ? "font-bold" : "font-medium text-slate-700"}>{val}</span> },
-    { header: 'Unit', accessor: 'unit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg" : ""}>{val}</span> },
-    { header: 'Profit', accessor: 'profit', render: (val, row) => <span className={clsx(row.isTotal ? "font-bold text-lg text-emerald-700" : "text-emerald-600 font-medium")}>{formatRupiah(val)}</span> },
+    { header: 'Nama', accessor: 'name', render: (val, row) => <span className="font-semibold">{val}</span> },
+    { header: 'Unit', accessor: 'unit', align: 'center' },
+    { header: 'Profit', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
   ];
 
   const detailColumns = [
     { header: 'Nama', accessor: 'name', render: (val) => <span className="font-medium text-slate-700">{val}</span> },
-    { header: 'Unit', accessor: 'unit' },
-    { header: 'Profit', accessor: 'profit', render: (val) => <span className="text-emerald-600 font-medium">{formatRupiah(val)}</span> },
+    { header: 'Unit', accessor: 'unit', align: 'center' },
+    { header: 'Profit', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
     { header: 'Catatan', accessor: 'note', render: (val) => <span className="text-slate-500 italic text-xs">{val || '-'}</span> },
+    { 
+      header: 'Aksi', 
+      accessor: 'id', 
+      align: 'center',
+      render: (_, row) => (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => handleEdit(row)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">Edit</button>
+          <button onClick={() => handleDelete(row)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">Hapus</button>
+        </div>
+      ) 
+    }
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Performa Sales</h1>
-        <p className="text-slate-500">Data performa sales berdasarkan tanggal aktif <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
-      </div>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Performa Sales" 
+        subtitle="Data performa sales berdasarkan tanggal aktif."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
         <SummaryCard 
           title="Total Unit Sales" 
           value={totalUnit} 
           icon={UserPlus} 
-          colorClass="bg-blue-100 text-blue-600"
+          isCurrency={false}
+          color="blue"
         />
         <SummaryCard 
           title="Total Profit Sales" 
-          value={formatRupiah(totalProfit)} 
+          value={totalProfit} 
           icon={TrendingUp} 
-          colorClass="bg-emerald-100 text-emerald-600"
+          color="emerald"
         />
         <SummaryCard 
           title="Avg Profit / Unit" 
-          value={formatRupiah(avgProfitPerUnit)} 
+          value={avgProfitPerUnit} 
           icon={FileSpreadsheet} 
-          colorClass="bg-teal-100 text-teal-600"
+          color="brand"
         />
-        <div className="card p-4 bg-white border-amber-100 hover:border-amber-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><Award className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600 text-sm">Unit Tertinggi</h3>
-          </div>
-          <p className="text-xl font-bold text-slate-800 truncate">{bestByUnit ? bestByUnit.name : '-'}</p>
-          <p className="text-xs text-slate-500 mt-1">{bestByUnit ? `${bestByUnit.unit} Unit` : '-'}</p>
-        </div>
-        <div className="card p-4 bg-white border-brand-100 hover:border-brand-300">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-brand-100 text-brand-600 rounded-lg"><Users className="w-5 h-5" /></div>
-            <h3 className="font-semibold text-slate-600 text-sm">Profit Tertinggi</h3>
-          </div>
-          <p className="text-xl font-bold text-slate-800 truncate">{bestByProfit ? bestByProfit.name : '-'}</p>
-          <p className="text-xs text-slate-500 mt-1">{bestByProfit ? formatRupiah(bestByProfit.profit) : '-'}</p>
-        </div>
+        <SummaryCard 
+          title="Unit Tertinggi" 
+          value={bestByUnit ? bestByUnit.name : '-'} 
+          icon={Award} 
+          isCurrency={false}
+          subtitle={bestByUnit ? `${bestByUnit.unit} Unit` : '-'}
+          color="amber"
+        />
+        <SummaryCard 
+          title="Profit Tertinggi" 
+          value={bestByProfit ? bestByProfit.name : '-'} 
+          icon={Users} 
+          isCurrency={false}
+          subtitle={bestByProfit ? formatRupiah(bestByProfit.profit) : '-'}
+          color="indigo"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -189,10 +205,7 @@ const SalesPerformance = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">
-              {isEditing ? 'Edit Performa Sales' : 'Tambah Sales'}
-            </h3>
+          <SectionCard title={isEditing ? 'Edit Performa Sales' : 'Tambah Sales'}>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nama Sales</label>
@@ -253,29 +266,24 @@ const SalesPerformance = () => {
                 )}
               </div>
             </form>
-          </div>
+          </SectionCard>
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Ringkasan Utama</h3>
-            <DataTable 
+          <SectionCard title="Ringkasan Utama">
+            <PremiumTable 
               columns={mainColumns} 
               data={summaryTableData} 
-              keyField="name" 
-              getRowClass={(row) => row.isTotal ? "bg-emerald-50 hover:bg-emerald-100" : ""}
+              highlightTotalRow={true}
             />
-          </div>
+          </SectionCard>
 
-          <div className="card p-5">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Detail Data Sales</h3>
-            <DataTable 
+          <SectionCard title="Detail Data Sales">
+            <PremiumTable 
               columns={detailColumns} 
               data={salesPerformance}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
             />
-          </div>
+          </SectionCard>
         </div>
       </div>
 

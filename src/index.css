@@ -6,9 +6,8 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased selection:bg-brand-500 selection:text-white;
+    @apply bg-[#F6F8FB] text-slate-900 antialiased selection:bg-brand-500 selection:text-white;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background-image: radial-gradient(circle at top right, rgba(37, 99, 235, 0.03), transparent 40%), radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.03), transparent 40%);
   }
 }
 
@@ -24,12 +23,16 @@
     transform: translateY(15px);
   }
 
+  .page-container {
+    @apply max-w-[1360px] mx-auto w-full px-4 md:px-6 lg:px-8 py-6 md:py-8;
+  }
+
   /* Cards with premium glass feel and soft hover */
   .card {
-    @apply bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/50 overflow-hidden transition-all duration-500 animate-fade-in-up;
+    @apply bg-white rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-slate-200/60 overflow-hidden transition-all duration-300;
   }
   .card:hover {
-    @apply shadow-[0_8px_30px_-4px_rgba(37,99,235,0.08)] border-white/80 transform -translate-y-1 bg-white/90;
+    @apply shadow-[0_8px_24px_-4px_rgba(0,0,0,0.08)] border-slate-300/80;
   }
 
   /* Premium Inputs */

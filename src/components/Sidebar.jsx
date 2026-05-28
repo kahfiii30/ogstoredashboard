@@ -28,7 +28,7 @@ const navItems = [
 
 const Sidebar = () => {
   return (
-    <div className="w-64 bg-slate-900 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300 hidden md:flex flex-col flex-shrink-0 transition-all duration-300 shadow-2xl relative z-30">
+    <div className="w-[260px] bg-slate-900 bg-gradient-to-b from-[#0F172A] to-[#1e293b] text-slate-300 hidden md:flex flex-col flex-shrink-0 transition-all duration-300 shadow-2xl relative z-30">
       <div className="h-16 flex items-center px-6 border-b border-white/10 bg-slate-950/50 backdrop-blur-sm">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)] mr-3">
           <Smartphone className="w-5 h-5 text-white" />

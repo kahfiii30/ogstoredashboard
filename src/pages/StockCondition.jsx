@@ -3,6 +3,10 @@ import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotalStok } from '../utils/calculations';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import PageHeader from '../components/PageHeader';
+import SectionCard from '../components/SectionCard';
+import SummaryCard from '../components/SummaryCard';
+import { Package } from 'lucide-react';
 import ChartCard from '../components/ChartCard';
 
 const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b']; // teal, sky, amber
@@ -35,28 +39,33 @@ const StockCondition = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Kondisi Stok</h1>
-        <p className="text-slate-500">Total nilai inventaris toko untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
-      </div>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Kondisi Stok" 
+        subtitle="Total nilai inventaris toko."
+        dateLabel={`Tanggal: ${formatDate(activeDate)}`}
+      />
 
-      <div className="card p-6 bg-indigo-50 border-indigo-200">
-        <p className="text-sm font-medium text-indigo-600 mb-1">Total Nilai Stok Keseluruhan</p>
-        <h3 className="text-3xl font-bold text-indigo-900">{formatRupiah(totalStok)}</h3>
+      <div className="max-w-md">
+        <SummaryCard 
+          title="Total Nilai Stok Keseluruhan" 
+          value={totalStok} 
+          icon={Package} 
+          color="indigo" 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-5">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-slate-800">Nilai Stok per Kategori</h3>
-            {!isEditing && (
+        <SectionCard 
+          title="Nilai Stok per Kategori"
+          action={
+            !isEditing && (
               <button onClick={() => setIsEditing(true)} className="btn-secondary text-sm">
                 Edit Nilai
               </button>
-            )}
-          </div>
-
+            )
+          }
+        >
           <div className="space-y-5">
             {['hpBaru', 'hpSecond'].map((key) => {
               const labels = {
@@ -106,7 +115,7 @@ const StockCondition = () => {
               </div>
             )}
           </div>
-        </div>
+        </SectionCard>
 
         <ChartCard title="Komposisi Stok">
           <ResponsiveContainer width="100%" height="100%">

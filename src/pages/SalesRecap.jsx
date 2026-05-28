@@ -2,20 +2,27 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, formatDate } from '../utils/format';
 import { filterSalesByDateRange } from '../utils/calculations';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
+import FilterBar from '../components/FilterBar';
+import SummaryCard from '../components/SummaryCard';
+import SectionCard from '../components/SectionCard';
+import PremiumTable from '../components/PremiumTable';
+import MoneyText from '../components/MoneyText';
+import Badge from '../components/Badge';
+import { Package, DollarSign, TrendingUp, Percent } from 'lucide-react';
 import clsx from 'clsx';
 
 const CategoryBadge = ({ category }) => {
   if (category === 'HP Baru') {
-    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200"><span className="mr-1">📦</span> HP Baru</span>;
+    return <Badge color="brand"><span className="mr-1">📦</span> HP Baru</Badge>;
   }
   if (category === 'HP Second') {
-    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200"><span className="mr-1">🔄</span> HP Second</span>;
+    return <Badge color="amber"><span className="mr-1">🔄</span> HP Second</Badge>;
   }
   if (category === 'TOTAL') {
-    return <span className="inline-flex items-center px-2 py-1 rounded-md bg-brand-600 text-white text-xs font-bold border border-brand-700">TOTAL KESELURUHAN</span>;
+    return <Badge color="blue">TOTAL KESELURUHAN</Badge>;
   }
-  return <span>{category}</span>;
+  return <Badge color="slate">{category}</Badge>;
 };
 
 const SalesRecap = () => {
@@ -50,12 +57,22 @@ const SalesRecap = () => {
   const filteredSales = salesData.allSales;
   const filteredPerf = salesData.allSalesPerformance;
 
-  const setQuickFilter = (days) => {
+  const [activeFilter, setActiveFilter] = useState('30days');
+
+  const setQuickFilter = (days, id) => {
+    setActiveFilter(id);
     const end = new Date();
     const start = new Date();
     start.setDate(end.getDate() - days);
     setEndDate(end.toISOString().split('T')[0]);
     setStartDate(start.toISOString().split('T')[0]);
+  };
+  
+  const handleQuickFilter = (id) => {
+    if (id === 'today') setQuickFilter(0, id);
+    if (id === '7days') setQuickFilter(7, id);
+    if (id === '14days') setQuickFilter(14, id);
+    if (id === '30days') setQuickFilter(30, id);
   };
 
   // Group by category for Summary
@@ -164,18 +181,20 @@ const SalesRecap = () => {
     },
     { 
       header: 'Unit', 
-      accessor: 'unit', 
-      render: (val, row) => <span className={clsx(row.isTotal && "font-bold text-lg")}>{val}</span> 
+      accessor: 'unit',
+      align: 'center'
     },
     { 
       header: 'Omzet', 
       accessor: 'omzet', 
-      render: (val, row) => <span className={clsx("text-brand-600 font-medium", row.isTotal && "font-bold text-lg text-brand-700")}>{formatRupiah(val)}</span> 
+      align: 'right',
+      render: (val, row) => <MoneyText value={val} /> 
     },
     { 
       header: 'Profit Kotor', 
       accessor: 'profit', 
-      render: (val, row) => <span className={clsx("text-emerald-600 font-medium", row.isTotal && "font-bold text-lg text-emerald-700")}>{formatRupiah(val)}</span> 
+      align: 'right',
+      render: (val, row) => <MoneyText value={val} showColor /> 
     },
   ];
 
@@ -184,7 +203,7 @@ const SalesRecap = () => {
       header: 'Tanggal', 
       accessor: 'date', 
       render: (val, row) => row.isFirstOfDay ? (
-        <span className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded-md text-xs">{formatDate(val)}</span>
+        <Badge color="slate">{formatDate(val)}</Badge>
       ) : null 
     },
     { 
@@ -192,97 +211,92 @@ const SalesRecap = () => {
       accessor: 'category',
       render: (val) => <CategoryBadge category={val} />
     },
-    { header: 'Unit', accessor: 'units', render: (val) => <span className="font-medium text-slate-700">{val}</span> },
-    { header: 'Omzet', accessor: 'omzet', render: (val) => <span className="text-brand-600">{formatRupiah(val)}</span> },
-    { header: 'Profit Kotor', accessor: 'profit', render: (val) => <span className="text-emerald-600">{formatRupiah(val)}</span> },
+    { header: 'Unit', accessor: 'units', align: 'center' },
+    { header: 'Omzet', accessor: 'omzet', align: 'right', render: (val) => <MoneyText value={val} /> },
+    { header: 'Profit Kotor', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
     { header: 'Catatan', accessor: 'catatanStr', render: (val) => <span className="text-slate-500 text-xs italic">{val}</span> },
   ];
 
   const perfColumns = [
-    { header: 'Nama', accessor: 'name', render: (val, row) => <span className={row.isTotal ? "font-bold text-slate-800" : "font-medium text-slate-700"}>{val}</span> },
-    { header: 'Total Unit', accessor: 'unit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg" : ""}>{val}</span> },
-    { header: 'Total Profit', accessor: 'profit', render: (val, row) => <span className={clsx("text-emerald-600", row.isTotal ? "font-bold text-lg text-emerald-700" : "font-medium")}>{formatRupiah(val)}</span> },
-    { header: 'Rata-rata Profit/Unit', accessor: 'avg', render: (_, row) => <span className="text-teal-600 font-medium">{row.unit > 0 ? formatRupiah(Math.floor(row.profit / row.unit)) : 'Rp 0'}</span> },
+    { header: 'Nama', accessor: 'name', render: (val, row) => <span className="font-medium">{val}</span> },
+    { header: 'Total Unit', accessor: 'unit', align: 'center' },
+    { header: 'Total Profit', accessor: 'profit', align: 'right', render: (val) => <MoneyText value={val} showColor /> },
+    { header: 'Rata-rata Profit/Unit', accessor: 'avg', align: 'right', render: (_, row) => <MoneyText value={row.unit > 0 ? Math.floor(row.profit / row.unit) : 0} /> },
   ];
 
+  const marginPercentage = summaryTotals.totalOmzet > 0 
+    ? ((summaryTotals.totalProfit / summaryTotals.totalOmzet) * 100).toFixed(2)
+    : 0;
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Rekap Penjualan</h1>
-        <p className="text-slate-500">Rekapitulasi penjualan berdasarkan rentang tanggal.</p>
+    <div className="space-y-6 animate-fade-in pb-10">
+      <PageHeader 
+        title="Rekap Penjualan" 
+        subtitle="Rekapitulasi penjualan berdasarkan rentang tanggal." 
+      />
+
+      <FilterBar 
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={(v) => { setStartDate(v); setActiveFilter(''); }}
+        onEndDateChange={(v) => { setEndDate(v); setActiveFilter(''); }}
+        onQuickFilter={handleQuickFilter}
+        activeFilter={activeFilter}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <SummaryCard 
+          title="Total Unit" 
+          value={summaryTotals.totalUnits} 
+          icon={Package} 
+          isCurrency={false}
+          color="blue" 
+        />
+        <SummaryCard 
+          title="Total Omzet" 
+          value={summaryTotals.totalOmzet} 
+          icon={DollarSign} 
+          color="brand" 
+        />
+        <SummaryCard 
+          title="Total Profit" 
+          value={summaryTotals.totalProfit} 
+          icon={TrendingUp} 
+          color="emerald" 
+        />
+        <SummaryCard 
+          title="Margin Kotor" 
+          value={`${marginPercentage}%`} 
+          icon={Percent} 
+          isCurrency={false}
+          color="indigo" 
+        />
       </div>
 
-      <div className="card p-5 border-l-4 border-l-brand-500 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4 mb-2 items-end">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Mulai</label>
-            <input 
-              type="date" 
-              className="input-field bg-slate-50" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Sampai</label>
-            <input 
-              type="date" 
-              className="input-field bg-slate-50" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button className="btn-secondary text-sm bg-white" onClick={() => setQuickFilter(0)}>Hari Ini</button>
-            <button className="btn-secondary text-sm bg-white" onClick={() => setQuickFilter(7)}>7 Hari</button>
-            <button className="btn-secondary text-sm bg-white" onClick={() => setQuickFilter(14)}>14 Hari</button>
-            <button className="btn-secondary text-sm bg-white" onClick={() => setQuickFilter(30)}>30 Hari</button>
-          </div>
-        </div>
-      </div>
+      <SectionCard title="Total Penjualan per Kategori">
+        <PremiumTable 
+          columns={summaryColumns} 
+          data={summaryData} 
+          highlightTotalRow={true}
+        />
+      </SectionCard>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-4">
-          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-            <span className="w-2 h-6 bg-brand-500 rounded-full mr-2"></span>
-            Total Penjualan per Kategori
-          </h3>
-          <DataTable 
-            columns={summaryColumns} 
-            data={summaryData} 
-            keyField="id" 
-            getRowClass={(row) => row.isTotal ? "bg-brand-50 hover:bg-brand-100" : ""}
+      <SectionCard title="Detail Harian Teragregasi">
+        <PremiumTable 
+          columns={detailColumns} 
+          data={detailData} 
+        />
+      </SectionCard>
+
+      {perfData.length > 0 && (
+        <SectionCard title="Rekap Performa Sales 1–30 Hari">
+          <PremiumTable 
+            columns={perfColumns} 
+            data={perfData} 
+            highlightTotalRow={true}
           />
-        </div>
-
-        <div className="xl:col-span-4 mt-4">
-          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-            <span className="w-2 h-6 bg-slate-800 rounded-full mr-2"></span>
-            Detail Harian Teragregasi
-          </h3>
-          <DataTable 
-            columns={detailColumns} 
-            data={detailData} 
-            keyField="id" 
-            getRowClass={(row) => row.isFirstOfDay ? "border-t-[3px] border-slate-200" : "border-t border-dashed border-slate-100"}
-          />
-        </div>
-
-        {perfData.length > 0 && (
-          <div className="xl:col-span-4 mt-4">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <span className="w-2 h-6 bg-blue-500 rounded-full mr-2"></span>
-              Rekap Performa Sales 1–30 Hari
-            </h3>
-            <DataTable 
-              columns={perfColumns} 
-              data={perfData} 
-              keyField="name" 
-              getRowClass={(row) => row.isTotal ? "bg-emerald-50 hover:bg-emerald-100" : ""}
-            />
-          </div>
-        )}
-      </div>
+        </SectionCard>
+      )}
     </div>
   );
 };
