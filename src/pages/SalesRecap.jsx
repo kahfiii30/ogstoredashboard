@@ -24,6 +24,14 @@ const CategoryBadge = ({ category }) => {
 const SalesRecap = () => {
   const { db } = useApp();
   
+  const todayStr = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+  const [startDate, setStartDate] = useState(thirtyDaysAgoStr);
+  const [endDate, setEndDate] = useState(todayStr);
+
   const salesData = useMemo(() => {
     let allSales = [];
     let allSalesPerformance = [];
@@ -44,14 +52,6 @@ const SalesRecap = () => {
   
   const filteredSales = salesData.allSales;
   const filteredPerf = salesData.allSalesPerformance;
-  
-  const todayStr = new Date().toISOString().split('T')[0];
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  const [startDate, setStartDate] = useState(thirtyDaysAgoStr);
-  const [endDate, setEndDate] = useState(todayStr);
 
   const setQuickFilter = (days) => {
     const end = new Date();
