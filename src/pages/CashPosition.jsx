@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useConfigData } from '../hooks/useSupabase';
-import { formatRupiah, parseNumber } from '../utils/format';
+import { useApp } from '../context/AppContext';
+import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotalUangAktif } from '../utils/calculations';
-import { Banknote, Building2, Smartphone, Users, Loader2 } from 'lucide-react';
+import { Banknote, Building2, Smartphone, Users } from 'lucide-react';
 
 const CashPosition = () => {
-  const { data: cashPosition, loading, updateData } = useConfigData('cash_position', {
-    cash: 0, bank: 0, ewallet: 0, piutang: 0
-  });
+  const { activeData, updateActiveData, activeDate } = useApp();
+  const cashPosition = activeData.cashPosition;
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...cashPosition });
 
   useEffect(() => {
     setFormData(cashPosition);
+    setIsEditing(false);
   }, [cashPosition]);
 
-  const handleSave = async () => {
-    await updateData({
+  const handleSave = () => {
+    updateActiveData('cashPosition', {
       cash: parseNumber(formData.cash),
       bank: parseNumber(formData.bank),
       ewallet: parseNumber(formData.ewallet),
@@ -25,10 +25,6 @@ const CashPosition = () => {
     });
     setIsEditing(false);
   };
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
 
   const totalUangAktif = calculateTotalUangAktif(cashPosition);
 
@@ -40,10 +36,10 @@ const CashPosition = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Posisi Uang Aktif</h1>
-        <p className="text-slate-500">Pantau ketersediaan dana cair untuk operasional.</p>
+        <p className="text-slate-500">Pantau ketersediaan dana cair untuk operasional tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
       </div>
 
       <div className="card p-6 bg-emerald-50 border-emerald-200">

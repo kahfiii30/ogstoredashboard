@@ -9,7 +9,8 @@ import {
   Package, 
   Wallet, 
   BarChart3,
-  Smartphone
+  Smartphone,
+  Award
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -21,6 +22,7 @@ const navItems = [
   { path: '/bills', label: 'Tagihan / Tempo', icon: FileText },
   { path: '/stock-condition', label: 'Kondisi Stok', icon: Package },
   { path: '/cash-position', label: 'Posisi Uang', icon: Wallet },
+  { path: '/sales-performance', label: 'Performa Sales', icon: Award },
   { path: '/reports', label: 'Laporan', icon: BarChart3 },
 ];
 

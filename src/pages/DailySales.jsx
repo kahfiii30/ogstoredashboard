@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
-import { useSales } from '../hooks/useSupabase';
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotal } from '../utils/calculations';
 import DataTable from '../components/DataTable';
-import { Loader2, Calendar } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 const DailySales = () => {
-  const { sales, loading, addSale, updateSale, deleteSale } = useSales();
-  
-  const todayStr = new Date().toISOString().split('T')[0];
-  const [activeDate, setActiveDate] = useState(todayStr);
+  const { activeData, updateActiveData, activeDate } = useApp();
+  const sales = activeData.sales || [];
   
   const [formData, setFormData] = useState({
     id: '',
-    date: todayStr,
     category: 'HP Baru',
     units: '',
     omzet: '',
@@ -22,19 +19,13 @@ const DailySales = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
-  // When activeDate changes, update formData date if we are not editing
-  const handleDateChange = (newDate) => {
-    setActiveDate(newDate);
-    if (!isEditing) {
-      setFormData(prev => ({ ...prev, date: newDate }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const saleData = {
-      date: formData.date,
+      id: isEditing ? formData.id : Date.now().toString(),
+      date: activeDate,
       category: formData.category,
       units: parseNumber(formData.units),
       omzet: parseNumber(formData.omzet),
@@ -42,23 +33,17 @@ const DailySales = () => {
       notes: formData.notes
     };
 
+    let newSales;
     if (isEditing) {
-      await updateSale(formData.id, saleData);
+      newSales = sales.map(s => s.id === formData.id ? saleData : s);
       setIsEditing(false);
     } else {
-      await addSale(saleData);
+      newSales = [saleData, ...sales];
     }
     
-    // Reset form except date
-    setFormData({
-      id: '',
-      date: formData.date, // keep the date that was just submitted
-      category: 'HP Baru',
-      units: '',
-      omzet: '',
-      profit: '',
-      notes: ''
-    });
+    updateActiveData('sales', newSales);
+    
+    setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', profit: '', notes: '' });
   };
 
   const handleEdit = (row) => {
@@ -66,85 +51,90 @@ const DailySales = () => {
     setIsEditing(true);
   };
 
-  const handleDelete = async (row) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-      await deleteSale(row.id);
+  const handleDelete = (row) => {
+    setItemToDelete(row);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      const newSales = sales.filter(s => s.id !== itemToDelete.id);
+      updateActiveData('sales', newSales);
+      setItemToDelete(null);
     }
   };
 
-  // Filter sales based on activeDate
-  const activeDateSales = sales.filter(s => s.date === activeDate);
-  const totalOmzet = calculateTotal(activeDateSales, 'omzet');
-  const totalProfit = calculateTotal(activeDateSales, 'profit');
-  const totalUnits = calculateTotal(activeDateSales, 'units');
+  // Group by category for Summary
+  const summaryTotals = useMemo(() => {
+    const acc = {
+      hpBaruUnits: 0, hpBaruOmzet: 0, hpBaruProfit: 0,
+      hpSecondUnits: 0, hpSecondOmzet: 0, hpSecondProfit: 0,
+      aksesorisUnits: 0, aksesorisOmzet: 0, aksesorisProfit: 0,
+      totalUnits: 0, totalOmzet: 0, totalProfit: 0
+    };
+
+    sales.forEach(sale => {
+      const units = Number(sale.units);
+      const omzet = Number(sale.omzet);
+      const profit = Number(sale.profit);
+
+      acc.totalUnits += units;
+      acc.totalOmzet += omzet;
+      acc.totalProfit += profit;
+
+      if (sale.category === 'HP Baru') {
+        acc.hpBaruUnits += units;
+        acc.hpBaruOmzet += omzet;
+        acc.hpBaruProfit += profit;
+      } else if (sale.category === 'HP Second') {
+        acc.hpSecondUnits += units;
+        acc.hpSecondOmzet += omzet;
+        acc.hpSecondProfit += profit;
+      } else if (sale.category === 'Aksesoris') {
+        acc.aksesorisUnits += units;
+        acc.aksesorisOmzet += omzet;
+        acc.aksesorisProfit += profit;
+      }
+    });
+
+    return acc;
+  }, [sales]);
+
+  const summaryData = [
+    { id: 'hpbaru', kategori: 'HP Baru', unit: summaryTotals.hpBaruUnits, omzet: summaryTotals.hpBaruOmzet, profit: summaryTotals.hpBaruProfit },
+    { id: 'hpsec', kategori: 'HP Second', unit: summaryTotals.hpSecondUnits, omzet: summaryTotals.hpSecondOmzet, profit: summaryTotals.hpSecondProfit },
+    { id: 'aks', kategori: 'Aksesoris', unit: summaryTotals.aksesorisUnits, omzet: summaryTotals.aksesorisOmzet, profit: summaryTotals.aksesorisProfit },
+    { id: 'total', kategori: 'TOTAL', unit: summaryTotals.totalUnits, omzet: summaryTotals.totalOmzet, profit: summaryTotals.totalProfit, isTotal: true },
+  ];
+
+  const summaryCols = [
+    { header: 'Kategori', accessor: 'kategori', render: (val, row) => <span className={row.isTotal ? "font-bold" : ""}>{val}</span> },
+    { header: 'Unit', accessor: 'unit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg" : ""}>{val}</span> },
+    { header: 'Omzet', accessor: 'omzet', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg text-brand-700" : "text-brand-600 font-medium"}>{formatRupiah(val)}</span> },
+    { header: 'Profit Kotor', accessor: 'profit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg text-emerald-700" : "text-emerald-600 font-medium"}>{formatRupiah(val)}</span> },
+  ];
 
   const columns = [
-    { header: 'Kategori', accessor: 'category', render: (val) => (
-      <span className="font-medium text-slate-700">{val}</span>
-    )},
+    { header: 'Kategori', accessor: 'category', render: (val) => <span className="font-medium text-slate-700">{val}</span> },
     { header: 'Unit', accessor: 'units' },
     { header: 'Omzet', accessor: 'omzet', render: (val) => <span className="text-brand-600">{formatRupiah(val)}</span> },
     { header: 'Profit', accessor: 'profit', render: (val) => <span className="text-emerald-600">{formatRupiah(val)}</span> },
     { header: 'Catatan', accessor: 'notes', render: (val) => <span className="text-slate-500 italic text-xs">{val || '-'}</span> },
   ];
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Penjualan Harian</h1>
-          <p className="text-slate-500">Catat dan kelola transaksi harian toko.</p>
-        </div>
-        
-        {/* Date Filter */}
-        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-2 shadow-sm">
-          <Calendar className="w-5 h-5 text-slate-400 mx-2" />
-          <input 
-            type="date" 
-            className="border-none focus:ring-0 text-sm font-semibold text-slate-700 bg-transparent cursor-pointer"
-            value={activeDate}
-            onChange={(e) => handleDateChange(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card p-4 bg-brand-50 border-brand-200">
-          <p className="text-sm font-medium text-brand-600 mb-1">Total Omzet ({formatDate(activeDate)})</p>
-          <h3 className="text-2xl font-bold text-brand-900">{formatRupiah(totalOmzet)}</h3>
-        </div>
-        <div className="card p-4 bg-emerald-50 border-emerald-200">
-          <p className="text-sm font-medium text-emerald-600 mb-1">Total Profit ({formatDate(activeDate)})</p>
-          <h3 className="text-2xl font-bold text-emerald-900">{formatRupiah(totalProfit)}</h3>
-        </div>
-        <div className="card p-4 bg-blue-50 border-blue-200">
-          <p className="text-sm font-medium text-blue-600 mb-1">Total Unit Terjual ({formatDate(activeDate)})</p>
-          <h3 className="text-2xl font-bold text-blue-900">{totalUnits}</h3>
-        </div>
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800">Penjualan Harian</h1>
+        <p className="text-slate-500">Catat dan kelola transaksi toko untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="card p-5 sticky top-6">
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card p-5">
             <h3 className="text-lg font-bold text-slate-800 mb-4">
               {isEditing ? 'Edit Penjualan' : 'Tambah Penjualan'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                <input 
-                  type="date" 
-                  className="input-field bg-slate-50 text-slate-500" 
-                  value={formData.date}
-                  onChange={e => setFormData({...formData, date: e.target.value})}
-                  required
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
                 <select 
@@ -208,9 +198,7 @@ const DailySales = () => {
                     className="btn-secondary"
                     onClick={() => {
                       setIsEditing(false);
-                      setFormData({
-                        id: '', date: activeDate, category: 'HP Baru', units: '', omzet: '', profit: '', notes: ''
-                      });
+                      setFormData({ id: '', category: 'HP Baru', units: '', omzet: '', profit: '', notes: '' });
                     }}
                   >
                     Batal
@@ -221,24 +209,39 @@ const DailySales = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="card p-5">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Ringkasan Penjualan</h3>
+            <DataTable 
+              columns={summaryCols} 
+              data={summaryData} 
+              keyField="id" 
+              getRowClass={(row) => row.isTotal ? "bg-brand-50 hover:bg-brand-100" : ""}
+            />
+          </div>
+
           <div className="card p-5">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-slate-800">Riwayat Penjualan</h3>
-              <span className="text-sm font-medium px-3 py-1 bg-slate-100 rounded-full text-slate-600">
-                {formatDate(activeDate)}
-              </span>
             </div>
             
             <DataTable 
               columns={columns} 
-              data={activeDateSales}
+              data={sales}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
           </div>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Hapus Data Penjualan"
+        message="Apakah Anda yakin ingin menghapus pencatatan penjualan ini? Data yang dihapus tidak dapat dikembalikan."
+      />
     </div>
   );
 };

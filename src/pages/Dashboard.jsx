@@ -3,18 +3,20 @@ import {
   TrendingUp, 
   DollarSign, 
   Package, 
-  AlertCircle, 
   CreditCard,
   Wallet,
-  Loader2
+  ArrowUpRight,
+  ArrowDownRight,
+  Users,
+  Award
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { useSales, useBills, useConfigData } from '../hooks/useSupabase';
+import { useApp } from '../context/AppContext';
 import { formatRupiah, formatDate } from '../utils/format';
-import { calculateTotal, calculateTotalStok, calculateTotalUangAktif, filterSalesByDateRange } from '../utils/calculations';
+import { calculateTotal, calculateTotalStok, calculateTotalUangAktif } from '../utils/calculations';
 import SummaryCard from '../components/SummaryCard';
 import ChartCard from '../components/ChartCard';
 import AlertBox from '../components/AlertBox';
@@ -22,65 +24,84 @@ import DataTable from '../components/DataTable';
 
 const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b', '#ef4444'];
 
-const Dashboard = () => {
-  const { sales, loading: salesLoading } = useSales();
-  const { bills, loading: billsLoading } = useBills();
-  const { data: stockAging, loading: agingLoading } = useConfigData('stock_aging', { '0-14': 0, '15-30': 0, '31-60': 0, '>60': 0 });
-  const { data: stockCondition, loading: condLoading } = useConfigData('stock_condition', { hpBaru: 0, hpSecond: 0, aksesoris: 0 });
-  const { data: cashPosition, loading: cashLoading } = useConfigData('cash_position', { cash: 0, bank: 0, ewallet: 0, piutang: 0 });
-
-  const loading = salesLoading || billsLoading || agingLoading || condLoading || cashLoading;
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+const TrendIndicator = ({ current, previous, isCurrency = true }) => {
+  const diff = current - previous;
+  const isPositive = diff >= 0;
   
-  // Calculations for Today
-  const todaySales = filterSalesByDateRange(sales, todayStr, todayStr);
-  const yesterdaySales = filterSalesByDateRange(sales, yesterdayStr, yesterdayStr);
-  const todayOmzet = calculateTotal(todaySales, 'omzet');
-  const todayProfit = calculateTotal(todaySales, 'profit');
-  const todayUnits = calculateTotal(todaySales, 'units');
+  if (previous === 0 && current === 0) return null;
 
-  // Overall calculations
-  const totalStok = calculateTotalStok(stockCondition);
-  const totalTagihan = calculateTotal(bills.filter(b => b.status !== 'Lunas'), 'amount');
-  const totalUangAktif = calculateTotalUangAktif(cashPosition);
+  return (
+    <div className={`flex items-center text-xs mt-2 font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+      {isPositive ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+      <span>
+        {isPositive ? 'Naik ' : 'Turun '}
+        {isCurrency ? formatRupiah(Math.abs(diff)) : Math.abs(diff)}
+        <span className="text-slate-400 ml-1 font-normal">dari {isCurrency ? formatRupiah(previous) : previous} kemarin</span>
+      </span>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const { activeData, previousData, activeDate, db } = useApp();
+
+  // Active Date Calculations
+  const activeOmzet = calculateTotal(activeData.sales, 'omzet');
+  const activeProfit = calculateTotal(activeData.sales, 'profit');
+  const activeUnits = calculateTotal(activeData.sales, 'units');
+  const activeStok = calculateTotalStok(activeData.stockCondition);
+  const activeTagihan = calculateTotal(activeData.bills.filter(b => b.status !== 'Lunas'), 'amount');
+  const activeUang = calculateTotalUangAktif(activeData.cashPosition);
+
+  // Sales Performance
+  const activeSalesPerformance = activeData.salesPerformance || [];
+  const activeSalesPerfUnit = activeSalesPerformance.reduce((sum, s) => sum + Number(s.unit), 0);
+  const activeSalesPerfProfit = activeSalesPerformance.reduce((sum, s) => sum + Number(s.profit), 0);
+  const bestSalesPerf = [...activeSalesPerformance].sort((a, b) => b.profit - a.profit)[0];
+
+  // Previous Date Calculations
+  const prevOmzet = calculateTotal(previousData.sales, 'omzet');
+  const prevProfit = calculateTotal(previousData.sales, 'profit');
+  const prevTagihan = calculateTotal(previousData.bills.filter(b => b.status !== 'Lunas'), 'amount');
+  const prevUang = calculateTotalUangAktif(previousData.cashPosition);
   
   // Alerts logic
-  const isAgingCritical = stockAging['>60'] > 300000000;
-  const isCashflowCritical = totalTagihan > totalUangAktif;
+  const isAgingCritical = activeData.stockAging['>60'] > 300000000;
+  const isCashflowCritical = activeTagihan > activeUang;
 
-  // Chart Data Preparation
+  // Chart Data Preparation (across all dates)
   const chartData30Days = useMemo(() => {
     const dataMap = {};
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const todayDate = new Date();
     
-    // Initialize map
+    // Initialize map for last 30 days
     for (let i = 29; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(todayDate);
       d.setDate(d.getDate() - i);
       const dStr = d.toISOString().split('T')[0];
       dataMap[dStr] = { date: dStr, displayDate: d.getDate() + '/' + (d.getMonth()+1), omzet: 0, hpBaru: 0, hpSecond: 0 };
     }
 
-    sales.forEach(sale => {
-      if (dataMap[sale.date]) {
-        dataMap[sale.date].omzet += Number(sale.omzet);
-        if (sale.category === 'HP Baru') dataMap[sale.date].hpBaru += Number(sale.units);
-        if (sale.category === 'HP Second') dataMap[sale.date].hpSecond += Number(sale.units);
-      }
-    });
+    if (db) {
+      Object.keys(db).forEach(dateKey => {
+        if (dataMap[dateKey]) {
+          const daySales = db[dateKey].sales || [];
+          daySales.forEach(sale => {
+            dataMap[dateKey].omzet += Number(sale.omzet);
+            if (sale.category === 'HP Baru') dataMap[dateKey].hpBaru += Number(sale.units);
+            if (sale.category === 'HP Second') dataMap[dateKey].hpSecond += Number(sale.units);
+          });
+        }
+      });
+    }
 
     return Object.values(dataMap);
-  }, [sales]);
+  }, [db]);
 
   const stockPieData = [
-    { name: 'HP Baru', value: stockCondition.hpBaru },
-    { name: 'HP Second', value: stockCondition.hpSecond },
-    { name: 'Aksesoris', value: stockCondition.aksesoris },
+    { name: 'HP Baru', value: activeData.stockCondition.hpBaru },
+    { name: 'HP Second', value: activeData.stockCondition.hpSecond },
+    { name: 'Aksesoris', value: activeData.stockCondition.aksesoris },
   ];
 
   const recentSalesCols = [
@@ -90,16 +111,12 @@ const Dashboard = () => {
     { header: 'Profit Kotor', accessor: 'profit', render: (val) => formatRupiah(val) },
   ];
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Dashboard Utama</h1>
-          <p className="text-slate-500">Ringkasan bisnis Anda hari ini.</p>
+          <p className="text-slate-500">Ringkasan bisnis Anda untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
         </div>
       </div>
 
@@ -109,60 +126,102 @@ const Dashboard = () => {
             <AlertBox 
               type="warning" 
               title="Perhatian: Stok Aging" 
-              message={`Stok >60 hari sudah mencapai ${formatRupiah(stockAging['>60'])}. Cashflow mungkin mulai berat, pertimbangkan untuk cuci gudang atau diskon khusus.`}
+              message={`Stok >60 hari sudah mencapai ${formatRupiah(activeData.stockAging['>60'])}. Cashflow mungkin mulai berat.`}
             />
           )}
           {isCashflowCritical && (
             <AlertBox 
               type="error" 
               title="Kritis: Posisi Keuangan" 
-              message={`Total uang aktif (${formatRupiah(totalUangAktif)}) lebih kecil dari tagihan aktif (${formatRupiah(totalTagihan)}). Harap segera atur strategi pembayaran.`}
+              message={`Total uang aktif (${formatRupiah(activeUang)}) lebih kecil dari tagihan aktif (${formatRupiah(activeTagihan)}). Harap segera atur strategi pembayaran.`}
             />
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <SummaryCard 
-          title="Omzet Hari Ini" 
-          value={formatRupiah(todayOmzet)} 
-          icon={DollarSign} 
-          colorClass="bg-brand-100 text-brand-600"
-        />
-        <SummaryCard 
-          title="Profit Kotor Hari Ini" 
-          value={formatRupiah(todayProfit)} 
-          icon={TrendingUp} 
-          colorClass="bg-emerald-100 text-emerald-600"
-        />
-        <SummaryCard 
-          title="Unit Terjual Hari Ini" 
-          value={`${todayUnits} Unit`} 
-          icon={Package} 
-          colorClass="bg-blue-100 text-blue-600"
-        />
-        <SummaryCard 
-          title="Total Nilai Stok" 
-          value={formatRupiah(totalStok)} 
-          icon={Package} 
-          colorClass="bg-indigo-100 text-indigo-600"
-        />
-        <SummaryCard 
-          title="Total Uang Aktif" 
-          value={formatRupiah(totalUangAktif)} 
-          icon={Wallet} 
-          colorClass="bg-emerald-100 text-emerald-600"
-        />
-        <SummaryCard 
-          title="Total Tagihan" 
-          value={formatRupiah(totalTagihan)} 
-          icon={CreditCard} 
-          colorClass="bg-red-100 text-red-600"
-        />
+        <div className="card p-5 bg-white border-brand-100 hover:border-brand-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-brand-100 text-brand-600 rounded-lg"><DollarSign className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Omzet</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeOmzet)}</p>
+          <TrendIndicator current={activeOmzet} previous={prevOmzet} />
+        </div>
+
+        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><TrendingUp className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Profit Kotor</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeProfit)}</p>
+          <TrendIndicator current={activeProfit} previous={prevProfit} />
+        </div>
+
+        <div className="card p-5 bg-white border-blue-100 hover:border-blue-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Package className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Unit Terjual</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{activeUnits} Unit</p>
+          <TrendIndicator current={activeUnits} previous={calculateTotal(previousData.sales, 'units')} isCurrency={false} />
+        </div>
+
+        <div className="card p-5 bg-white border-indigo-100 hover:border-indigo-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Package className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Nilai Stok</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeStok)}</p>
+          <p className="text-xs text-slate-400 mt-2">Berdasarkan data hari ini</p>
+        </div>
+
+        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><Wallet className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Uang Aktif</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeUang)}</p>
+          <TrendIndicator current={activeUang} previous={prevUang} />
+        </div>
+
+        <div className="card p-5 bg-white border-red-100 hover:border-red-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-red-100 text-red-600 rounded-lg"><CreditCard className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Total Tagihan Aktif</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeTagihan)}</p>
+          <TrendIndicator current={activeTagihan} previous={prevTagihan} />
+        </div>
+
+        <div className="card p-5 bg-white border-blue-100 hover:border-blue-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Users className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Performa Sales (Unit)</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{activeSalesPerfUnit} Unit</p>
+        </div>
+
+        <div className="card p-5 bg-white border-emerald-100 hover:border-emerald-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><TrendingUp className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Performa Sales (Profit)</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800">{formatRupiah(activeSalesPerfProfit)}</p>
+        </div>
+
+        <div className="card p-5 bg-white border-amber-100 hover:border-amber-300">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><Award className="w-5 h-5" /></div>
+            <h3 className="font-semibold text-slate-600">Sales Terbaik (Profit)</h3>
+          </div>
+          <p className="text-2xl font-bold text-slate-800 truncate">{bestSalesPerf ? bestSalesPerf.name : '-'}</p>
+          <p className="text-xs text-slate-500 mt-2">{bestSalesPerf ? formatRupiah(bestSalesPerf.profit) : '-'}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Trend Omzet (30 Hari)">
+        <ChartCard title="Trend Omzet (30 Hari Terakhir)">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData30Days}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -179,7 +238,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Unit HP Baru vs HP Second (30 Hari)">
+        <ChartCard title="Unit HP Baru vs HP Second (30 Hari Terakhir)">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData30Days}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -218,14 +277,13 @@ const Dashboard = () => {
         <div className="card p-5">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-800">Penjualan Kemarin</h3>
-              <p className="text-sm text-slate-500 mt-1">{formatDate(yesterdayStr)}</p>
+              <h3 className="text-lg font-bold text-slate-800">Daftar Penjualan</h3>
+              <p className="text-sm text-slate-500 mt-1">{formatDate(activeDate)}</p>
             </div>
-            <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-md">Review H-1</span>
           </div>
           <DataTable 
             columns={recentSalesCols} 
-            data={yesterdaySales} 
+            data={activeData.sales} 
           />
         </div>
       </div>

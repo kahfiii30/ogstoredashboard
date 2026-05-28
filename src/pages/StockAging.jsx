@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useConfigData } from '../hooks/useSupabase';
-import { formatRupiah, parseNumber } from '../utils/format';
+import { useApp } from '../context/AppContext';
+import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import AlertBox from '../components/AlertBox';
 import ChartCard from '../components/ChartCard';
-import { Loader2 } from 'lucide-react';
 
 const StockAging = () => {
-  const { data: stockAging, loading, updateData } = useConfigData('stock_aging', {
-    '0-14': 0, '15-30': 0, '31-60': 0, '>60': 0
-  });
+  const { activeData, updateActiveData, activeDate } = useApp();
+  const stockAging = activeData.stockAging;
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...stockAging });
 
-  // Sync formData when data loads
+  // Sync formData when date changes
   useEffect(() => {
     setFormData(stockAging);
+    setIsEditing(false);
   }, [stockAging]);
 
-  const handleSave = async () => {
-    await updateData({
+  const handleSave = () => {
+    updateActiveData('stockAging', {
       '0-14': parseNumber(formData['0-14']),
       '15-30': parseNumber(formData['15-30']),
       '31-60': parseNumber(formData['31-60']),
@@ -28,10 +27,6 @@ const StockAging = () => {
     });
     setIsEditing(false);
   };
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
 
   const isCritical = stockAging['>60'] > 300000000;
 
@@ -43,10 +38,10 @@ const StockAging = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Stok Aging</h1>
-        <p className="text-slate-500">Pantau umur stok untuk menjaga likuiditas.</p>
+        <p className="text-slate-500">Pantau umur stok untuk menjaga likuiditas tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
       </div>
 
       {isCritical && (

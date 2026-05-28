@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import { useSales, useBills, useConfigData } from '../hooks/useSupabase';
-import { formatRupiah } from '../utils/format';
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../context/AppContext';
+import { formatRupiah, formatDate } from '../utils/format';
 import { calculateMargin, filterSalesByDateRange, calculateTotal, calculateTotalStok, calculateTotalUangAktif } from '../utils/calculations';
-import { Download, ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react';
+import { Download, ShieldCheck, ShieldAlert, Calendar, CalendarDays, Users } from 'lucide-react';
+import DataTable from '../components/DataTable';
+import clsx from 'clsx';
 
 const Reports = () => {
-  const { sales, loading: salesLoading } = useSales();
-  const { data: stockCondition, loading: condLoading } = useConfigData('stock_condition', { hpBaru: 0, hpSecond: 0, aksesoris: 0 });
-  const { bills, loading: billsLoading } = useBills();
-  const { data: cashPosition, loading: cashLoading } = useConfigData('cash_position', { cash: 0, bank: 0, ewallet: 0, piutang: 0 });
-
-  const loading = salesLoading || billsLoading || condLoading || cashLoading;
+  const { activeData, activeDate, db } = useApp();
+  
+  const [reportMode, setReportMode] = useState('active'); // 'active' or 'range'
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -20,30 +19,74 @@ const Reports = () => {
   const [startDate, setStartDate] = useState(thirtyDaysAgoStr);
   const [endDate, setEndDate] = useState(todayStr);
 
-  const filteredSales = filterSalesByDateRange(sales, startDate, endDate);
+  // --- DATA UNTUK MODE TANGGAL AKTIF ---
+  const activeOmzet = calculateTotal(activeData.sales, 'omzet');
+  const activeProfit = calculateTotal(activeData.sales, 'profit');
+  const activeUnits = calculateTotal(activeData.sales, 'units');
+  const activeMargin = calculateMargin(activeProfit, activeOmzet);
+  const activeStok = calculateTotalStok(activeData.stockCondition);
+  const activeTagihan = calculateTotal(activeData.bills.filter(b => b.status !== 'Lunas'), 'amount');
+  const activeUang = calculateTotalUangAktif(activeData.cashPosition);
 
-  const totalOmzet = calculateTotal(filteredSales, 'omzet');
-  const totalProfit = calculateTotal(filteredSales, 'profit');
-  const totalUnits = calculateTotal(filteredSales, 'units');
-  const marginKotor = calculateMargin(totalProfit, totalOmzet);
+  // --- DATA UNTUK MODE RANGE ---
+  const rangeData = useMemo(() => {
+    if (!db) return { sales: [], salesPerformance: [], bills: [], stockCondition: {}, cashPosition: {} };
+    
+    let allSales = [];
+    let allSalesPerformance = [];
+    Object.keys(db).forEach(dateKey => {
+      if (dateKey >= startDate && dateKey <= endDate) {
+        if (db[dateKey].sales) {
+          allSales = [...allSales, ...db[dateKey].sales];
+        }
+        if (db[dateKey].salesPerformance) {
+          allSalesPerformance = [...allSalesPerformance, ...db[dateKey].salesPerformance];
+        }
+      }
+    });
 
-  const totalStok = calculateTotalStok(stockCondition);
-  const totalTagihan = calculateTotal(bills.filter(b => b.status !== 'Lunas'), 'amount');
-  const totalUangAktif = calculateTotalUangAktif(cashPosition);
-  
-  const selisihUang = totalUangAktif - totalTagihan;
+    const endSnapshot = db[endDate] || activeData;
+
+    return {
+      sales: allSales,
+      salesPerformance: allSalesPerformance,
+      bills: endSnapshot.bills || [],
+      stockCondition: endSnapshot.stockCondition || {},
+      cashPosition: endSnapshot.cashPosition || {}
+    };
+  }, [db, startDate, endDate, activeData]);
+
+  const rangeOmzet = calculateTotal(rangeData.sales, 'omzet');
+  const rangeProfit = calculateTotal(rangeData.sales, 'profit');
+  const rangeUnits = calculateTotal(rangeData.sales, 'units');
+  const rangeMargin = calculateMargin(rangeProfit, rangeOmzet);
+  const rangeStok = calculateTotalStok(rangeData.stockCondition);
+  const rangeTagihan = calculateTotal(rangeData.bills.filter(b => b.status !== 'Lunas'), 'amount');
+  const rangeUang = calculateTotalUangAktif(rangeData.cashPosition);
+
+  // --- RENDER VARIABLES ---
+  const displayOmzet = reportMode === 'active' ? activeOmzet : rangeOmzet;
+  const displayProfit = reportMode === 'active' ? activeProfit : rangeProfit;
+  const displayUnits = reportMode === 'active' ? activeUnits : rangeUnits;
+  const displayMargin = reportMode === 'active' ? activeMargin : rangeMargin;
+  const displayStok = reportMode === 'active' ? activeStok : rangeStok;
+  const displayTagihan = reportMode === 'active' ? activeTagihan : rangeTagihan;
+  const displayUang = reportMode === 'active' ? activeUang : rangeUang;
+  const targetSales = reportMode === 'active' ? activeData.sales : rangeData.sales;
+
+  const selisihUang = displayUang - displayTagihan;
   const isAman = selisihUang >= 0;
 
   const exportCSV = () => {
-    if (filteredSales.length === 0) {
-      alert('Tidak ada data untuk diexport.');
+    if (!targetSales || targetSales.length === 0) {
+      alert('Tidak ada data penjualan untuk diexport.');
       return;
     }
 
     const headers = ['Tanggal', 'Kategori', 'Unit', 'Omzet', 'Profit', 'Catatan'];
     const csvContent = [
       headers.join(','),
-      ...filteredSales.map(s => 
+      ...targetSales.map(s => 
         [
           s.date, 
           s.category, 
@@ -59,18 +102,52 @@ const Reports = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `laporan_penjualan_${startDate}_sd_${endDate}.csv`);
+    
+    const fileName = reportMode === 'active' 
+      ? `laporan_penjualan_${activeDate}.csv`
+      : `laporan_penjualan_${startDate}_sd_${endDate}.csv`;
+
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
+  // --- SALES PERFORMANCE COLUMNS & DATA ---
+  const activePerfData = activeData.salesPerformance || [];
+  
+  const rangePerfDataMap = {};
+  (rangeData.salesPerformance || []).forEach(sp => {
+    if (!rangePerfDataMap[sp.name]) rangePerfDataMap[sp.name] = { name: sp.name, unit: 0, profit: 0 };
+    rangePerfDataMap[sp.name].unit += Number(sp.unit);
+    rangePerfDataMap[sp.name].profit += Number(sp.profit);
+  });
+  
+  const rangePerfData = Object.values(rangePerfDataMap).sort((a, b) => b.profit - a.profit);
+  const rangeTotalUnit = rangePerfData.reduce((sum, item) => sum + item.unit, 0);
+  const rangeTotalProfit = rangePerfData.reduce((sum, item) => sum + item.profit, 0);
+  
+  const rangePerfDataWithTotal = [
+    ...rangePerfData,
+    ...(rangePerfData.length > 0 ? [{ name: 'TOTAL', unit: rangeTotalUnit, profit: rangeTotalProfit, isTotal: true }] : [])
+  ];
+
+  const activePerfColumns = [
+    { header: 'Nama', accessor: 'name', render: (val) => <span className="font-medium text-slate-700">{val}</span> },
+    { header: 'Unit', accessor: 'unit' },
+    { header: 'Profit', accessor: 'profit', render: (val) => <span className="text-emerald-600 font-medium">{formatRupiah(val)}</span> },
+    { header: 'Catatan', accessor: 'note', render: (val) => <span className="text-slate-500 text-xs italic">{val || '-'}</span> },
+  ];
+
+  const rangePerfColumns = [
+    { header: 'Nama', accessor: 'name', render: (val, row) => <span className={row.isTotal ? "font-bold text-slate-800" : "font-medium text-slate-700"}>{val}</span> },
+    { header: 'Total Unit', accessor: 'unit', render: (val, row) => <span className={row.isTotal ? "font-bold text-lg" : ""}>{val}</span> },
+    { header: 'Total Profit', accessor: 'profit', render: (val, row) => <span className={clsx("text-emerald-600", row.isTotal ? "font-bold text-lg text-emerald-700" : "font-medium")}>{formatRupiah(val)}</span> },
+    { header: 'Rata-rata Profit/Unit', accessor: 'avg', render: (_, row) => <span className="text-teal-600 font-medium">{row.unit > 0 ? formatRupiah(Math.floor(row.profit / row.unit)) : 'Rp 0'}</span> },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Laporan Bisnis</h1>
@@ -82,29 +159,60 @@ const Reports = () => {
         </button>
       </div>
 
-      <div className="card p-5">
-        <h3 className="text-sm font-medium text-slate-700 mb-3">Filter Tanggal Laporan Penjualan</h3>
-        <div className="flex flex-col sm:flex-row gap-4 items-end">
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Mulai</label>
-            <input 
-              type="date" 
-              className="input-field py-1.5" 
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Sampai</label>
-            <input 
-              type="date" 
-              className="input-field py-1.5" 
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+      <div className="bg-white p-2 rounded-xl border border-slate-200 inline-flex">
+        <button 
+          onClick={() => setReportMode('active')}
+          className={clsx(
+            "px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors",
+            reportMode === 'active' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          Laporan Tanggal Aktif
+        </button>
+        <button 
+          onClick={() => setReportMode('range')}
+          className={clsx(
+            "px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors",
+            reportMode === 'range' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          <CalendarDays className="w-4 h-4 mr-2" />
+          Laporan Rentang Waktu
+        </button>
+      </div>
+
+      {reportMode === 'active' ? (
+        <div className="card p-5 border-l-4 border-l-brand-500 shadow-sm bg-brand-50/30">
+          <h3 className="text-sm font-medium text-slate-700">Menampilkan Data Untuk Tanggal:</h3>
+          <p className="text-lg font-bold text-brand-700 mt-1">{formatDate(activeDate)}</p>
+          <p className="text-xs text-slate-500 mt-2">Untuk mengubah tanggal, gunakan pemilih tanggal (Date Picker) di kanan atas.</p>
+        </div>
+      ) : (
+        <div className="card p-5 border-l-4 border-l-brand-500 shadow-sm">
+          <h3 className="text-sm font-medium text-slate-700 mb-3">Filter Rentang Tanggal</h3>
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Mulai</label>
+              <input 
+                type="date" 
+                className="input-field py-1.5 bg-slate-50" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Sampai</label>
+              <input 
+                type="date" 
+                className="input-field py-1.5 bg-slate-50" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
@@ -113,19 +221,19 @@ const Reports = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Omzet</span>
-                <span className="font-bold text-lg text-slate-800">{formatRupiah(totalOmzet)}</span>
+                <span className="font-bold text-lg text-slate-800">{formatRupiah(displayOmzet)}</span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Profit Kotor</span>
-                <span className="font-bold text-lg text-emerald-600">{formatRupiah(totalProfit)}</span>
+                <span className="font-bold text-lg text-emerald-600">{formatRupiah(displayProfit)}</span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Unit Terjual</span>
-                <span className="font-bold text-lg text-slate-800">{totalUnits} Unit</span>
+                <span className="font-bold text-lg text-slate-800">{displayUnits} Unit</span>
               </div>
               <div className="flex justify-between items-center pb-1">
                 <span className="text-slate-600">Margin Kotor</span>
-                <span className="font-bold text-lg text-blue-600">{marginKotor}%</span>
+                <span className="font-bold text-lg text-blue-600">{displayMargin}%</span>
               </div>
             </div>
           </div>
@@ -135,7 +243,7 @@ const Reports = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Nilai Stok</span>
-                <span className="font-bold text-lg text-indigo-700">{formatRupiah(totalStok)}</span>
+                <span className="font-bold text-lg text-indigo-700">{formatRupiah(displayStok)}</span>
               </div>
             </div>
           </div>
@@ -143,7 +251,7 @@ const Reports = () => {
 
         <div className="space-y-6">
           <div className="card p-6 border-t-4 border-t-amber-500">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Posisi Keuangan (Saat Ini)</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Posisi Keuangan</h3>
             
             <div className="mb-6">
               {isAman ? (
@@ -168,11 +276,11 @@ const Reports = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Uang Aktif</span>
-                <span className="font-bold text-lg text-emerald-600">{formatRupiah(totalUangAktif)}</span>
+                <span className="font-bold text-lg text-emerald-600">{formatRupiah(displayUang)}</span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <span className="text-slate-600">Total Tagihan Aktif</span>
-                <span className="font-bold text-lg text-red-600">{formatRupiah(totalTagihan)}</span>
+                <span className="font-bold text-lg text-red-600">{formatRupiah(displayTagihan)}</span>
               </div>
               <div className="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <span className="font-medium text-slate-700">Selisih (Uang - Tagihan)</span>
@@ -183,6 +291,28 @@ const Reports = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="card p-6 mt-6 border-t-4 border-t-blue-500">
+        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+          <Users className="w-5 h-5 text-blue-500 mr-2" />
+          Laporan Performa Sales
+        </h3>
+        
+        {reportMode === 'active' ? (
+          <DataTable 
+            columns={activePerfColumns} 
+            data={activePerfData} 
+            keyField="id" 
+          />
+        ) : (
+          <DataTable 
+            columns={rangePerfColumns} 
+            data={rangePerfDataWithTotal} 
+            keyField="name" 
+            getRowClass={(row) => row.isTotal ? "bg-emerald-50 hover:bg-emerald-100" : ""}
+          />
+        )}
       </div>
     </div>
   );

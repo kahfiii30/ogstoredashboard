@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, Bell, UserCircle } from 'lucide-react';
 import { formatDate } from '../utils/format';
+import ActiveDatePicker from './ActiveDatePicker';
 
 const Header = () => {
   const today = new Date().toISOString();
@@ -17,10 +18,7 @@ const Header = () => {
       </div>
       
       <div className="flex items-center space-x-3 sm:space-x-4">
-        <div className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full flex items-center">
-          <span className="w-2 h-2 rounded-full bg-brand-500 mr-2 animate-pulse"></span>
-          {formatDate(today)}
-        </div>
+        <ActiveDatePicker />
         
         <button className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors relative">
           <Bell className="w-5 h-5" />

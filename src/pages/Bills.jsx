@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useBills } from '../hooks/useSupabase';
+import { useApp } from '../context/AppContext';
 import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotal } from '../utils/calculations';
 import DataTable from '../components/DataTable';
 import AlertBox from '../components/AlertBox';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
+import { AlertTriangle } from 'lucide-react';
 
 const Bills = () => {
-  const { bills, loading, addBill, updateBill, deleteBill } = useBills();
+  const { activeData, updateActiveData, activeDate } = useApp();
+  const bills = activeData.bills || [];
   
   const [formData, setFormData] = useState({
     id: '',
@@ -19,10 +21,12 @@ const Bills = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const billData = {
+      id: isEditing ? formData.id : Date.now().toString(),
       distributor: formData.distributor,
       due_date: formData.due_date,
       amount: parseNumber(formData.amount),
@@ -30,12 +34,15 @@ const Bills = () => {
       notes: formData.notes
     };
 
+    let newBills;
     if (isEditing) {
-      await updateBill(formData.id, billData);
+      newBills = bills.map(b => b.id === formData.id ? billData : b);
       setIsEditing(false);
     } else {
-      await addBill(billData);
+      newBills = [billData, ...bills];
     }
+    
+    updateActiveData('bills', newBills);
     
     setFormData({
       id: '', distributor: '', due_date: '', amount: '', status: 'Belum Dibayar', notes: ''
@@ -47,15 +54,17 @@ const Bills = () => {
     setIsEditing(true);
   };
 
-  const handleDelete = async (row) => {
-    if (window.confirm('Hapus tagihan ini?')) {
-      await deleteBill(row.id);
-    }
+  const handleDelete = (row) => {
+    setItemToDelete(row);
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      const newBills = bills.filter(b => b.id !== itemToDelete.id);
+      updateActiveData('bills', newBills);
+      setItemToDelete(null);
+    }
+  };
 
   const activeBills = bills.filter(b => b.status !== 'Lunas');
   const totalActive = calculateTotal(activeBills, 'amount');
@@ -105,10 +114,10 @@ const Bills = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Tagihan / Tempo</h1>
-        <p className="text-slate-500">Kelola hutang distributor dan jatuh tempo.</p>
+        <p className="text-slate-500">Kelola hutang distributor dan jatuh tempo untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
       </div>
 
       <div className="card p-6 bg-red-50 border-red-200">
@@ -217,6 +226,14 @@ const Bills = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Hapus Tagihan"
+        message="Apakah Anda yakin ingin menghapus tagihan distributor ini? Data yang dihapus tidak dapat dikembalikan."
+      />
     </div>
   );
 };

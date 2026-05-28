@@ -1,37 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useConfigData } from '../hooks/useSupabase';
-import { formatRupiah, parseNumber } from '../utils/format';
+import { useApp } from '../context/AppContext';
+import { formatRupiah, parseNumber, formatDate } from '../utils/format';
 import { calculateTotalStok } from '../utils/calculations';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ChartCard from '../components/ChartCard';
-import { Loader2 } from 'lucide-react';
 
 const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b']; // teal, sky, amber
 
 const StockCondition = () => {
-  const { data: stockCondition, loading, updateData } = useConfigData('stock_condition', {
-    hpBaru: 0, hpSecond: 0, aksesoris: 0
-  });
+  const { activeData, updateActiveData, activeDate } = useApp();
+  const stockCondition = activeData.stockCondition;
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...stockCondition });
 
   useEffect(() => {
     setFormData(stockCondition);
+    setIsEditing(false);
   }, [stockCondition]);
 
-  const handleSave = async () => {
-    await updateData({
+  const handleSave = () => {
+    updateActiveData('stockCondition', {
       hpBaru: parseNumber(formData.hpBaru),
       hpSecond: parseNumber(formData.hpSecond),
       aksesoris: parseNumber(formData.aksesoris),
     });
     setIsEditing(false);
   };
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-brand-500" /></div>;
-  }
 
   const totalStok = calculateTotalStok(stockCondition);
 
@@ -42,10 +37,10 @@ const StockCondition = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Kondisi Stok</h1>
-        <p className="text-slate-500">Total nilai inventaris toko berdasarkan kategori.</p>
+        <p className="text-slate-500">Total nilai inventaris toko untuk tanggal <span className="font-bold text-brand-600">{formatDate(activeDate)}</span>.</p>
       </div>
 
       <div className="card p-6 bg-indigo-50 border-indigo-200">
