@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatRupiah, formatDate } from '../utils/format';
 import { calculateMargin, filterSalesByDateRange, calculateTotal, calculateTotalStok, calculateTotalUangAktif } from '../utils/calculations';
-import { Download, ShieldCheck, ShieldAlert, Calendar, CalendarDays, Users, Upload, Database } from 'lucide-react';
+import { Download, ShieldCheck, ShieldAlert, Calendar, CalendarDays, Users, Upload, Database, Cloud } from 'lucide-react';
 import DataTable from '../components/DataTable';
+import { supabase } from '../lib/supabase';
 import clsx from 'clsx';
 
 const Reports = () => {
@@ -134,12 +135,21 @@ const Reports = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const importedDb = JSON.parse(event.target.result);
         if (typeof importedDb === 'object' && importedDb !== null) {
-          if (window.confirm('PERINGATAN: Mengimpor data akan MENIMPA semua data yang ada saat ini. Anda yakin ingin melanjutkan?')) {
+          if (window.confirm('PERINGATAN: Mengimpor data akan MENIMPA semua data di Cloud. Anda yakin ingin melanjutkan?')) {
+            // Update local storage just in case
             localStorage.setItem('og_store_daily_db', JSON.stringify(importedDb));
+            
+            // Upload to Supabase
+            const promises = Object.keys(importedDb).map(dateKey => 
+              supabase.from('daily_snapshots').upsert({ date: dateKey, data: importedDb[dateKey] })
+            );
+            await Promise.all(promises);
+            
+            alert('Restore ke Cloud berhasil!');
             window.location.reload();
           }
         } else {
@@ -358,12 +368,12 @@ const Reports = () => {
 
       <div className="card p-6 mt-6 border-t-4 border-t-slate-800">
         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-          <Database className="w-5 h-5 text-slate-700 mr-2" />
-          Backup & Restore Database
+          <Cloud className="w-5 h-5 text-slate-700 mr-2" />
+          Ekspor / Impor Database Cloud
         </h3>
         <p className="text-sm text-slate-500 mb-4">
-          Karena aplikasi ini menyimpan data di browser (Local Storage), data di Localhost (komputer Anda) akan berbeda dengan data di Vercel (online).
-          Gunakan fitur ini untuk memindahkan data antar perangkat atau melakukan backup berkala.
+          Data Anda sekarang sudah otomatis tersinkron di Cloud (Supabase).
+          Gunakan fitur ini hanya jika Anda ingin menyimpan cadangan offline ke dalam komputer Anda, atau mengimpor data lama.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <button onClick={exportDatabase} className="btn-primary bg-slate-800 hover:bg-slate-900 flex items-center justify-center">

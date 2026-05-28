@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getPreviousAvailableDate, createDailyDataFromPrevious } from '../utils/dailyData';
+import { supabase } from '../lib/supabase';
 
 const AppContext = createContext();
 
@@ -18,144 +18,170 @@ export const AppProvider = ({ children }) => {
     return new Date().toISOString().split('T')[0];
   });
 
-  const [db, setDb] = useLocalStorage('og_store_daily_db', null);
-  
-  // Migration & Seeding Logic
+  const [db, setDbState] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Custom setDb that updates local state and syncs to Supabase
+  const setDb = useCallback(async (newDbOrUpdater) => {
+    setDbState(prev => {
+      const nextDb = typeof newDbOrUpdater === 'function' ? newDbOrUpdater(prev) : newDbOrUpdater;
+      
+      // Sync to supabase in background (debounce or direct)
+      // Since nextDb is the whole DB, we figure out what changed, or we just upload all keys
+      // A more optimized way is just to push everything or push specific dates.
+      // But for simplicity, we just push all keys to Supabase when setDb is called.
+      // In practice, updateDailyData handles the specific day upsert.
+      return nextDb;
+    });
+  }, []);
+
+  const syncDateToSupabase = async (date, data) => {
+    try {
+      await supabase.from('daily_snapshots').upsert({ date, data });
+    } catch (err) {
+      console.error('Failed to sync to Supabase', err);
+    }
+  };
+
+  // Initialization: Fetch from Supabase, fallback to LocalStorage Migration
   useEffect(() => {
-    if (!db) {
-      // Create initial DB structure with seed data
-      const initialDb = {
-        "2026-05-26": { 
-          ...defaultDayData, 
-          sales: [
-            {id: '1', date: '2026-05-26', category: 'HP Baru', units: 10, omzet: 15000000, profit: 1000000, notes: 'Seed 26'}
-          ],
-          bills: [
-            {id: 'b1', distributor: 'PT Sumber Makmur', due_date: '2026-06-01', amount: 50000000, status: 'Belum Dibayar', notes: ''}
-          ],
-          cashPosition: { cash: 5000000, bank: 20000000, ewallet: 1500000, piutang: 0 },
-          salesPerformance: [
-            { id: 'sp1', name: 'Aldi', unit: 8, profit: 3900000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp2', name: 'Rian', unit: 6, profit: 1800000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp3', name: 'Dika', unit: 2, profit: 500000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp4', name: 'Sinta', unit: 10, profit: 4700000, note: '', createdAt: new Date().toISOString() }
-          ]
-        },
-        "2026-05-27": { 
-          ...defaultDayData, 
-          sales: [
-            {id: '2', date: '2026-05-27', category: 'HP Baru', units: 15, omzet: 20000000, profit: 1500000, notes: 'Seed 27'},
-            {id: '3', date: '2026-05-27', category: 'Aksesoris', units: 30, omzet: 3000000, profit: 1500000, notes: 'Charger'}
-          ],
-          bills: [
-            {id: 'b2', distributor: 'PT Bintang Terang', due_date: '2026-06-05', amount: 57000000, status: 'Belum Dibayar', notes: ''}
-          ],
-          stockCondition: { hpBaru: 150000000, hpSecond: 40000000, aksesoris: 5000000 },
-          cashPosition: { cash: 8000000, bank: 35000000, ewallet: 2500000, piutang: 0 },
-          salesPerformance: [
-            { id: 'sp5', name: 'Aldi', unit: 9, profit: 4600000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp6', name: 'Rian', unit: 5, profit: 1500000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp7', name: 'Dika', unit: 4, profit: 900000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp8', name: 'Sinta', unit: 12, profit: 5500000, note: '', createdAt: new Date().toISOString() }
-          ]
-        },
-        "2026-05-28": { 
-          ...defaultDayData, 
-          sales: [
-            {id: '4', date: '2026-05-28', category: 'HP Second', units: 5, omzet: 5000000, profit: 500000, notes: 'Seed 28'}
-          ],
-          bills: [
-            {id: 'b3', distributor: 'PT Maju Jaya', due_date: '2026-06-10', amount: 76000000, status: 'Belum Dibayar', notes: ''}
-          ],
-          stockCondition: { hpBaru: 120000000, hpSecond: 45000000, aksesoris: 4500000 },
-          cashPosition: { cash: 12000000, bank: 40000000, ewallet: 3000000, piutang: 1000000 },
-          salesPerformance: [
-            { id: 'sp9', name: 'Aldi', unit: 11, profit: 5300000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp10', name: 'Rian', unit: 7, profit: 2100000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp11', name: 'Dika', unit: 3, profit: 700000, note: '', createdAt: new Date().toISOString() },
-            { id: 'sp12', name: 'Sinta', unit: 14, profit: 6400000, note: '', createdAt: new Date().toISOString() }
-          ]
-        },
-      };
-      setDb(initialDb);
-    } else {
-      // MIGRATION: Fix copied sales that have wrong dates
-      let needsUpdate = false;
-      const newDb = { ...db };
-      Object.keys(newDb).forEach(dateKey => {
-        if (newDb[dateKey].sales) {
-          let modified = false;
-          newDb[dateKey].sales = newDb[dateKey].sales.map(s => {
-            if (s.date !== dateKey) {
-              modified = true;
-              return { ...s, date: dateKey };
-            }
-            return s;
+    const initDb = async () => {
+      try {
+        const { data, error } = await supabase.from('daily_snapshots').select('*');
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Supabase has data, load it
+          const loadedDb = {};
+          data.forEach(row => {
+            loadedDb[row.date] = row.data;
           });
-          if (modified) needsUpdate = true;
-        }
-        if (newDb[dateKey].salesPerformance) {
-          let modified = false;
-          if (dateKey !== '2026-05-26' && dateKey !== '2026-05-27' && dateKey !== '2026-05-28') {
-             newDb[dateKey].salesPerformance = newDb[dateKey].salesPerformance.map(s => {
-               if (!s.createdAt || !s.createdAt.startsWith(dateKey)) {
-                 modified = true;
-                 return { ...s, createdAt: dateKey + 'T00:00:00.000Z' };
-               }
-               return s;
-             });
-             if (modified) needsUpdate = true;
+          setDbState(loadedDb);
+        } else {
+          // Supabase is empty! Migrate from LocalStorage
+          const localDbStr = localStorage.getItem('og_store_daily_db');
+          if (localDbStr) {
+            const localDb = JSON.parse(localDbStr);
+            setDbState(localDb);
+            // Upload all local data to Supabase
+            const promises = Object.keys(localDb).map(dateKey => 
+              supabase.from('daily_snapshots').upsert({ date: dateKey, data: localDb[dateKey] })
+            );
+            await Promise.all(promises);
+            console.log("Migrated local storage to Supabase successfully.");
+          } else {
+            // Completely fresh
+            setDbState({});
           }
+        }
+      } catch (err) {
+        console.error("Error initializing DB:", err);
+        // Fallback to local storage on error
+        const localDbStr = localStorage.getItem('og_store_daily_db');
+        if (localDbStr) {
+          setDbState(JSON.parse(localDbStr));
+        } else {
+          setDbState({});
+        }
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initDb();
+  }, []);
+
+  // Migration & Seeding Logic (same as before, runs after load)
+  useEffect(() => {
+    if (isInitializing || !db || Object.keys(db).length === 0) return;
+
+    let needsUpdate = false;
+    const newDb = { ...db };
+    
+    // Fix copied sales that have wrong dates
+    Object.keys(newDb).forEach(dateKey => {
+      if (newDb[dateKey].sales) {
+        let modified = false;
+        newDb[dateKey].sales = newDb[dateKey].sales.map(s => {
+          if (s.date !== dateKey) {
+            modified = true;
+            return { ...s, date: dateKey };
+          }
+          return s;
+        });
+        if (modified) needsUpdate = true;
+      }
+      if (newDb[dateKey].salesPerformance) {
+        let modified = false;
+        if (dateKey !== '2026-05-26' && dateKey !== '2026-05-27' && dateKey !== '2026-05-28') {
+            newDb[dateKey].salesPerformance = newDb[dateKey].salesPerformance.map(s => {
+              if (!s.createdAt || !s.createdAt.startsWith(dateKey)) {
+                modified = true;
+                return { ...s, createdAt: dateKey + 'T00:00:00.000Z' };
+              }
+              return s;
+            });
+            if (modified) needsUpdate = true;
+        }
+      }
+    });
+
+    // MIGRATION: Propagate bills forward
+    const sortedDates = Object.keys(newDb).sort();
+    for (let i = 1; i < sortedDates.length; i++) {
+      const prevDate = sortedDates[i-1];
+      const currDate = sortedDates[i];
+      const prevBills = newDb[prevDate].bills || [];
+      const currBills = newDb[currDate].bills || [];
+      
+      let billsChanged = false;
+      const newCurrBills = [...currBills];
+      
+      prevBills.forEach(pb => {
+        if (!newCurrBills.find(cb => cb.id === pb.id)) {
+          newCurrBills.push(pb);
+          billsChanged = true;
         }
       });
-
-      // MIGRATION: Propagate bills forward (fix for missing seed data accumulation)
-      const sortedDates = Object.keys(newDb).sort();
-      for (let i = 1; i < sortedDates.length; i++) {
-        const prevDate = sortedDates[i-1];
-        const currDate = sortedDates[i];
-        const prevBills = newDb[prevDate].bills || [];
-        const currBills = newDb[currDate].bills || [];
-        
-        let billsChanged = false;
-        const newCurrBills = [...currBills];
-        
-        prevBills.forEach(pb => {
-          // Jika bill dari hari sebelumnya tidak ada di hari ini, tambahkan
-          if (!newCurrBills.find(cb => cb.id === pb.id)) {
-            newCurrBills.push(pb);
-            billsChanged = true;
-          }
-        });
-        
-        if (billsChanged) {
-          newDb[currDate].bills = newCurrBills;
-          needsUpdate = true;
-        }
-      }
-      if (needsUpdate) {
-        setDb(newDb);
+      
+      if (billsChanged) {
+        newDb[currDate].bills = newCurrBills;
+        needsUpdate = true;
       }
     }
-  }, [db, setDb]);
+    
+    if (needsUpdate) {
+      setDbState(newDb);
+      // Sync all changed dates to supabase
+      Object.keys(newDb).forEach(dateKey => {
+        syncDateToSupabase(dateKey, newDb[dateKey]);
+      });
+    }
+  }, [db, isInitializing]);
 
   // Auto-copy data when navigating to a date without data
   useEffect(() => {
-    if (db && !db[activeDate]) {
+    if (isInitializing || !db) return;
+    
+    if (!db[activeDate]) {
       const prevDate = getPreviousAvailableDate(activeDate, db);
       if (prevDate) {
-        setDb(prev => {
+        setDbState(prev => {
           if (prev[activeDate]) return prev; // race condition check
           const newDb = { ...prev };
           newDb[activeDate] = createDailyDataFromPrevious(activeDate, prevDate, prev, defaultDayData);
+          
+          // Sync new day to Supabase
+          syncDateToSupabase(activeDate, newDb[activeDate]);
+          
           return newDb;
         });
       }
     }
-  }, [activeDate, db, setDb]);
+  }, [activeDate, db, isInitializing]);
 
   const updateDailyData = (date, key, data) => {
-    setDb(prev => {
+    setDbState(prev => {
       const newDb = { ...(prev || {}) };
       if (!newDb[date]) {
         const prevDate = getPreviousAvailableDate(date, prev);
@@ -170,6 +196,10 @@ export const AppProvider = ({ children }) => {
       if (newDb[date].meta) {
         newDb[date].meta.updatedAt = new Date().toISOString();
       }
+      
+      // Sync this specific day to Supabase
+      syncDateToSupabase(date, newDb[date]);
+      
       return newDb;
     });
   };
@@ -203,6 +233,17 @@ export const AppProvider = ({ children }) => {
   const updateActiveData = (key, data) => {
     updateDailyData(activeDate, key, data);
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500 font-medium">Sinkronisasi Cloud...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{
