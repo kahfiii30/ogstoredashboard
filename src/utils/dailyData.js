@@ -28,11 +28,18 @@ export const createDailyDataFromPrevious = (targetDate, previousDate, db, defaul
   }
 
   // Update dates on transactional data so they belong to the new date
-  if (newData.sales && Array.isArray(newData.sales)) {
-    newData.sales = newData.sales.map(s => ({ ...s, date: targetDate }));
-  }
+  // For daily sales, we want to start fresh (empty array)
+  newData.sales = [];
+  
+  // For sales performance, we keep the names but reset the units and profit to 0
   if (newData.salesPerformance && Array.isArray(newData.salesPerformance)) {
-    newData.salesPerformance = newData.salesPerformance.map(sp => ({ ...sp, createdAt: targetDate + 'T00:00:00.000Z' }));
+    newData.salesPerformance = newData.salesPerformance.map(sp => ({ 
+      ...sp, 
+      unit: 0, 
+      profit: 0, 
+      note: '',
+      createdAt: targetDate + 'T00:00:00.000Z' 
+    }));
   }
 
   // Tambahkan metadata clone
