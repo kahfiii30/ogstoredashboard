@@ -27,6 +27,16 @@ const DailySales = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
+  const handleCurrencyChange = (field, value) => {
+    const rawValue = value.replace(/[^0-9]/g, '');
+    if (!rawValue) {
+      setFormData({ ...formData, [field]: '' });
+      return;
+    }
+    const formatted = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseInt(rawValue, 10));
+    setFormData({ ...formData, [field]: formatted });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const saleData = {
@@ -54,9 +64,11 @@ const DailySales = () => {
   };
 
   const handleEdit = (row) => {
+    const hppVal = row.hpp !== undefined ? row.hpp : (row.omzet - row.profit);
     setFormData({ 
       ...row, 
-      hpp: row.hpp !== undefined ? row.hpp : (row.omzet - row.profit) 
+      omzet: 'Rp ' + new Intl.NumberFormat('id-ID').format(row.omzet),
+      hpp: 'Rp ' + new Intl.NumberFormat('id-ID').format(hppVal) 
     });
     setIsEditing(true);
   };
@@ -163,22 +175,24 @@ const DailySales = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Penjualan / Omzet (Rp)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Penjualan / Omzet</label>
                 <input 
-                  type="number" 
+                  type="text" 
                   className="input-field"
                   value={formData.omzet}
-                  onChange={e => setFormData({...formData, omzet: e.target.value})}
+                  onChange={e => handleCurrencyChange('omzet', e.target.value)}
+                  placeholder="Rp 0"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">HPP / Modal (Rp)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">HPP / Modal</label>
                 <input 
-                  type="number" 
+                  type="text" 
                   className="input-field"
                   value={formData.hpp}
-                  onChange={e => setFormData({...formData, hpp: e.target.value})}
+                  onChange={e => handleCurrencyChange('hpp', e.target.value)}
+                  placeholder="Rp 0"
                   required
                 />
               </div>
