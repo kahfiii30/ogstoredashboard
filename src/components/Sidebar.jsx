@@ -51,13 +51,17 @@ const Sidebar = () => {
                     : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 hover:shadow-sm'
                 )}
               >
-                <Icon className={clsx(
-                  'w-5 h-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110',
-                  isActive ? 'text-brand-500 drop-shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'text-slate-500 group-hover:text-slate-300'
-                )} />
-                {item.label}
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
+                {({ isActive }) => (
+                  <>
+                    <Icon className={clsx(
+                      'w-5 h-5 mr-3 flex-shrink-0 transition-transform duration-300 group-hover:scale-110',
+                      isActive ? 'text-brand-500 drop-shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'text-slate-500 group-hover:text-slate-300'
+                    )} />
+                    {item.label}
+                    {isActive && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
+                    )}
+                  </>
                 )}
               </NavLink>
             );
