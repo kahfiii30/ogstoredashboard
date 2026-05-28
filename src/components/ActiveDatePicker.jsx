@@ -23,6 +23,9 @@ const ActiveDatePicker = () => {
     setActiveDate(today);
   };
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isTodayOrFuture = activeDate >= todayStr;
+
   return (
     <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-1.5">
       <div className="hidden sm:flex items-center px-3 border-r border-slate-100">
@@ -42,6 +45,7 @@ const ActiveDatePicker = () => {
         <input 
           type="date" 
           value={activeDate}
+          max={todayStr}
           onChange={(e) => setActiveDate(e.target.value)}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
@@ -52,7 +56,12 @@ const ActiveDatePicker = () => {
 
       <button 
         onClick={handleNextDay}
-        className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+        disabled={isTodayOrFuture}
+        className={`p-1.5 rounded-lg transition-colors ${
+          isTodayOrFuture 
+            ? 'text-slate-300 cursor-not-allowed' 
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+        }`}
         title="Hari Berikutnya"
       >
         <ChevronRight className="w-5 h-5" />
