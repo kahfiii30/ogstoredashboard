@@ -11,8 +11,6 @@ import Badge from '../components/Badge';
 import AlertBox from '../components/AlertBox';
 import ConfirmModal from '../components/ConfirmModal';
 import { AlertTriangle, CreditCard, CheckCircle } from 'lucide-react';
-import ConfirmModal from '../components/ConfirmModal';
-import { AlertTriangle } from 'lucide-react';
 
 const Bills = () => {
   const { activeData, updateActiveData, activeDate } = useApp();

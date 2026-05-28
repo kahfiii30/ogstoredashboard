@@ -291,7 +291,7 @@ const DailySales = () => {
               highlightTotalRow={true}
             />
           </SectionCard>
-
+        </div>
       </div>
 
       <SectionCard title="Riwayat Penjualan">
