@@ -45,10 +45,10 @@ const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => clsx(
-                  'flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 group relative overflow-hidden',
+                  'flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 group relative overflow-hidden outline-none focus:outline-none select-none border',
                   isActive 
-                    ? 'bg-brand-600/10 text-brand-400 border border-brand-500/20 shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 hover:shadow-sm'
+                    ? 'bg-brand-600/10 text-brand-400 border-brand-500/20 shadow-[inset_0_0_20px_rgba(37,99,235,0.05)]' 
+                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200 hover:shadow-sm'
                 )}
               >
                 {({ isActive }) => (
@@ -58,9 +58,10 @@ const Sidebar = () => {
                       isActive ? 'text-brand-500 drop-shadow-[0_0_8px_rgba(37,99,235,0.5)]' : 'text-slate-500 group-hover:text-slate-300'
                     )} />
                     {item.label}
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
-                    )}
+                    <div className={clsx(
+                        "absolute left-0 top-1/2 -translate-y-1/2 w-1 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(37,99,235,0.8)] transition-all duration-300",
+                        isActive ? "h-8 opacity-100" : "h-0 opacity-0"
+                      )}></div>
                   </>
                 )}
               </NavLink>

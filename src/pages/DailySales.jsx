@@ -9,6 +9,7 @@ import PremiumTable from '../components/PremiumTable';
 import MoneyText from '../components/MoneyText';
 import Badge from '../components/Badge';
 import ConfirmModal from '../components/ConfirmModal';
+import CurrencyInput from '../components/CurrencyInput';
 import { Package, DollarSign, TrendingUp, Percent } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -33,16 +34,6 @@ const DailySales = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-
-  const handleCurrencyChange = (field, value) => {
-    const rawValue = value.replace(/[^0-9]/g, '');
-    if (!rawValue) {
-      setFormData({ ...formData, [field]: '' });
-      return;
-    }
-    const formatted = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseInt(rawValue, 10));
-    setFormData({ ...formData, [field]: formatted });
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -74,8 +65,8 @@ const DailySales = () => {
     const hppVal = row.hpp !== undefined ? row.hpp : (row.omzet - row.profit);
     setFormData({ 
       ...row, 
-      omzet: 'Rp ' + new Intl.NumberFormat('id-ID').format(row.omzet),
-      hpp: 'Rp ' + new Intl.NumberFormat('id-ID').format(hppVal) 
+      omzet: row.omzet,
+      hpp: hppVal 
     });
     setIsEditing(true);
   };
@@ -230,23 +221,19 @@ const DailySales = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Penjualan / Omzet</label>
-                <input 
-                  type="text" 
+                <CurrencyInput 
                   className="input-field"
                   value={formData.omzet}
-                  onChange={e => handleCurrencyChange('omzet', e.target.value)}
-                  placeholder="Rp 0"
+                  onChange={e => setFormData({...formData, omzet: e.target.value})}
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">HPP / Modal</label>
-                <input 
-                  type="text" 
+                <CurrencyInput 
                   className="input-field"
                   value={formData.hpp}
-                  onChange={e => handleCurrencyChange('hpp', e.target.value)}
-                  placeholder="Rp 0"
+                  onChange={e => setFormData({...formData, hpp: e.target.value})}
                   required
                 />
               </div>

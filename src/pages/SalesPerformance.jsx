@@ -8,6 +8,7 @@ import PremiumTable from '../components/PremiumTable';
 import MoneyText from '../components/MoneyText';
 import ConfirmModal from '../components/ConfirmModal';
 import ChartCard from '../components/ChartCard';
+import CurrencyInput from '../components/CurrencyInput';
 import { Users, TrendingUp, Award, UserPlus, FileSpreadsheet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import clsx from 'clsx';
@@ -230,9 +231,7 @@ const SalesPerformance = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Profit (Rp)</label>
-                <input 
-                  type="number" 
-                  min="0"
+                <CurrencyInput 
                   className="input-field"
                   value={formData.profit}
                   onChange={e => setFormData({...formData, profit: e.target.value})}

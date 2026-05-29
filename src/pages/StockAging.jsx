@@ -7,6 +7,7 @@ import SectionCard from '../components/SectionCard';
 import SummaryCard from '../components/SummaryCard';
 import AlertBox from '../components/AlertBox';
 import ChartCard from '../components/ChartCard';
+import CurrencyInput from '../components/CurrencyInput';
 import { Clock, CheckCircle, AlertTriangle, AlertOctagon } from 'lucide-react';
 
 const StockAging = () => {
@@ -65,30 +66,35 @@ const StockAging = () => {
           value={totalAging} 
           icon={Clock} 
           color="brand" 
+          variant="compact"
         />
         <SummaryCard 
           title="0-14 Hari" 
           value={stockAging['0-14']} 
           icon={CheckCircle} 
           color="emerald" 
+          variant="compact"
         />
         <SummaryCard 
           title="15-30 Hari" 
           value={stockAging['15-30']} 
           icon={Clock} 
           color="blue" 
+          variant="compact"
         />
         <SummaryCard 
           title="31-60 Hari" 
           value={stockAging['31-60']} 
           icon={AlertTriangle} 
           color="amber" 
+          variant="compact"
         />
         <SummaryCard 
           title=">60 Hari" 
           value={stockAging['>60']} 
           icon={AlertOctagon} 
           color="red" 
+          variant="compact"
         />
       </div>
 
@@ -117,8 +123,7 @@ const StockAging = () => {
                 <div key={key} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                   <span className="font-medium text-slate-700 mb-2 md:mb-0">{labels[key]}</span>
                   {isEditing ? (
-                    <input
-                      type="number"
+                    <CurrencyInput
                       className="input-field max-w-[200px]"
                       value={formData[key]}
                       onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}

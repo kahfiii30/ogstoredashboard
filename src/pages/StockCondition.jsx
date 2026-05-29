@@ -8,6 +8,7 @@ import SectionCard from '../components/SectionCard';
 import SummaryCard from '../components/SummaryCard';
 import { Package } from 'lucide-react';
 import ChartCard from '../components/ChartCard';
+import CurrencyInput from '../components/CurrencyInput';
 
 const COLORS = ['#14b8a6', '#0ea5e9', '#f59e0b']; // teal, sky, amber
 
@@ -85,8 +86,7 @@ const StockCondition = () => {
                     <span className="font-medium text-slate-700">{labels[key]}</span>
                   </div>
                   {isEditing ? (
-                    <input
-                      type="number"
+                    <CurrencyInput
                       className="input-field max-w-[250px]"
                       value={formData[key]}
                       onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}

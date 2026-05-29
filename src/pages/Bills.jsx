@@ -10,6 +10,7 @@ import MoneyText from '../components/MoneyText';
 import Badge from '../components/Badge';
 import AlertBox from '../components/AlertBox';
 import ConfirmModal from '../components/ConfirmModal';
+import CurrencyInput from '../components/CurrencyInput';
 import { AlertTriangle, CreditCard, CheckCircle } from 'lucide-react';
 
 const Bills = () => {
@@ -191,8 +192,7 @@ const Bills = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nominal (Rp)</label>
-                <input 
-                  type="number" 
+                <CurrencyInput 
                   className="input-field"
                   value={formData.amount}
                   onChange={e => setFormData({...formData, amount: e.target.value})}

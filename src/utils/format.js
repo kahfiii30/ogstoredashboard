@@ -8,6 +8,16 @@ export const formatRupiah = (number) => {
   }).format(number);
 };
 
+export const formatRupiahCompact = (number) => {
+  if (number === undefined || number === null) return 'Rp 0';
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(number);
+};
+
 export const formatDate = (dateString) => {
   if (!dateString) return '-';
   const date = new Date(dateString);

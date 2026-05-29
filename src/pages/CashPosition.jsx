@@ -5,6 +5,7 @@ import { calculateTotalUangAktif } from '../utils/calculations';
 import PageHeader from '../components/PageHeader';
 import SectionCard from '../components/SectionCard';
 import SummaryCard from '../components/SummaryCard';
+import CurrencyInput from '../components/CurrencyInput';
 import { Banknote, Building2, Smartphone, Users, Wallet } from 'lucide-react';
 
 const CashPosition = () => {
@@ -77,8 +78,7 @@ const CashPosition = () => {
               
               <div className="mt-auto">
                 {isEditing ? (
-                  <input
-                    type="number"
+                  <CurrencyInput
                     className="input-field w-full"
                     value={formData[item.key]}
                     onChange={(e) => setFormData({ ...formData, [item.key]: e.target.value })}
