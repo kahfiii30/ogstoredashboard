@@ -41,15 +41,23 @@ const ActiveDatePicker = () => {
         <ChevronLeft className="w-5 h-5" />
       </button>
 
-      <div className="relative">
+      <div className="relative group cursor-pointer" onClick={() => {
+        const input = document.getElementById('hidden-date-input');
+        if (input && input.showPicker) {
+          try {
+            input.showPicker();
+          } catch (e) {}
+        }
+      }}>
         <input 
+          id="hidden-date-input"
           type="date" 
           value={activeDate}
           max={todayStr}
           onChange={(e) => setActiveDate(e.target.value)}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />
-        <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center justify-center min-w-[130px] border border-slate-200 dark:border-slate-700 group-hover:border-brand-300 dark:group-hover:border-brand-500 transition-colors">
+        <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center justify-center min-w-[130px] border border-slate-200 dark:border-slate-700 group-hover:border-brand-300 dark:group-hover:border-brand-500 transition-colors pointer-events-none">
           {formatDate(activeDate)}
         </div>
       </div>
