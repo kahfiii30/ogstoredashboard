@@ -28,9 +28,13 @@ const CategoryBadge = ({ category }) => {
 const SalesRecap = () => {
   const { db } = useApp();
   
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
   const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 31);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
   const [startDate, setStartDate] = useState(thirtyDaysAgoStr);
@@ -62,7 +66,8 @@ const SalesRecap = () => {
   const setQuickFilter = (days, id) => {
     setActiveFilter(id);
     const end = new Date();
-    const start = new Date();
+    end.setDate(end.getDate() - 1); // yesterday
+    const start = new Date(end);
     start.setDate(end.getDate() - days);
     setEndDate(end.toISOString().split('T')[0]);
     setStartDate(start.toISOString().split('T')[0]);

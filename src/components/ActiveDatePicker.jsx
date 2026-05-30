@@ -19,12 +19,19 @@ const ActiveDatePicker = () => {
   };
 
   const handleToday = () => {
-    const today = new Date().toISOString().split('T')[0];
-    setActiveDate(today);
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const maxDateStr = d.toISOString().split('T')[0];
+    setActiveDate(maxDateStr);
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isTodayOrFuture = activeDate >= todayStr;
+  const maxDateStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+  
+  const isTodayOrFuture = activeDate >= maxDateStr;
 
   return (
     <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-1.5 transition-colors">
@@ -53,7 +60,7 @@ const ActiveDatePicker = () => {
           id="hidden-date-input"
           type="date" 
           value={activeDate}
-          max={todayStr}
+          max={maxDateStr}
           onChange={(e) => setActiveDate(e.target.value)}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />

@@ -13,9 +13,13 @@ const Reports = () => {
   const [reportMode, setReportMode] = useState('active'); // 'active' or 'range'
 
   const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 31);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
 
   const [startDate, setStartDate] = useState(thirtyDaysAgoStr);
   const [endDate, setEndDate] = useState(todayStr);
