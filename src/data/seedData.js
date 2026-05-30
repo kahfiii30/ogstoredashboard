@@ -76,9 +76,7 @@ const generateHistoricalData = () => {
 export const historicalSales = generateHistoricalData();
 
 export const seedStockAging = {
-  '0-14': 2100000000,
-  '15-30': 1300000000,
-  '31-60': 700000000,
+  '0-60': 4100000000,
   '>60': 330000000,
 };
 

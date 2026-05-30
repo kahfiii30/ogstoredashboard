@@ -25,9 +25,7 @@ const StockAging = () => {
 
   const handleSave = () => {
     updateActiveData('stockAging', {
-      '0-14': parseNumber(formData['0-14']),
-      '15-30': parseNumber(formData['15-30']),
-      '31-60': parseNumber(formData['31-60']),
+      '0-60': parseNumber(formData['0-60']),
       '>60': parseNumber(formData['>60']),
     });
     setIsEditing(false);
@@ -36,9 +34,7 @@ const StockAging = () => {
   const isCritical = stockAging['>60'] > 300000000;
 
   const chartData = [
-    { name: '0-14 Hari', value: stockAging['0-14'], color: '#10b981' },
-    { name: '15-30 Hari', value: stockAging['15-30'], color: '#3b82f6' },
-    { name: '31-60 Hari', value: stockAging['31-60'], color: '#f59e0b' },
+    { name: '0-60 Hari', value: stockAging['0-60'], color: '#3b82f6' },
     { name: '>60 Hari', value: stockAging['>60'], color: '#ef4444' },
   ];
 
@@ -60,7 +56,7 @@ const StockAging = () => {
         />
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-5">
         <SummaryCard 
           title="Total Stok Aging" 
           value={totalAging} 
@@ -69,24 +65,10 @@ const StockAging = () => {
           variant="compact"
         />
         <SummaryCard 
-          title="0-14 Hari" 
-          value={stockAging['0-14']} 
+          title="0-60 Hari" 
+          value={stockAging['0-60']} 
           icon={CheckCircle} 
-          color="emerald" 
-          variant="compact"
-        />
-        <SummaryCard 
-          title="15-30 Hari" 
-          value={stockAging['15-30']} 
-          icon={Clock} 
           color="blue" 
-          variant="compact"
-        />
-        <SummaryCard 
-          title="31-60 Hari" 
-          value={stockAging['31-60']} 
-          icon={AlertTriangle} 
-          color="amber" 
           variant="compact"
         />
         <SummaryCard 
@@ -113,9 +95,7 @@ const StockAging = () => {
           <div className="space-y-4">
             {Object.keys(stockAging).map((key) => {
               const labels = {
-                '0-14': '0 - 14 Hari (Lancar)',
-                '15-30': '15 - 30 Hari (Menengah)',
-                '31-60': '31 - 60 Hari (Lambat)',
+                '0-60': '0 - 60 Hari (Lancar/Menengah)',
                 '>60': '> 60 Hari (Mati / Dead Stock)',
               };
 
