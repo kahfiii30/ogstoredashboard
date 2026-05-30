@@ -125,6 +125,16 @@ export const AppProvider = ({ children }) => {
     
     // Fix copied sales that have wrong dates
     Object.keys(newDb).forEach(dateKey => {
+      // MIGRATION: Fix stock aging categories to 0-60
+      const sa = newDb[dateKey].stockAging;
+      if (sa && typeof sa['0-14'] !== 'undefined') {
+        newDb[dateKey].stockAging = {
+          '0-60': Number(sa['0-14'] || 0) + Number(sa['15-30'] || 0) + Number(sa['31-60'] || 0) + Number(sa['0-60'] || 0),
+          '>60': Number(sa['>60'] || 0)
+        };
+        needsUpdate = true;
+      }
+
       if (newDb[dateKey].sales) {
         let modified = false;
         newDb[dateKey].sales = newDb[dateKey].sales.map(s => {
@@ -151,29 +161,7 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    // MIGRATION: Propagate bills forward
-    const sortedDates = Object.keys(newDb).sort();
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = sortedDates[i-1];
-      const currDate = sortedDates[i];
-      const prevBills = newDb[prevDate].bills || [];
-      const currBills = newDb[currDate].bills || [];
-      
-      let billsChanged = false;
-      const newCurrBills = [...currBills];
-      
-      prevBills.forEach(pb => {
-        if (!newCurrBills.find(cb => cb.id === pb.id)) {
-          newCurrBills.push(pb);
-          billsChanged = true;
-        }
-      });
-      
-      if (billsChanged) {
-        newDb[currDate].bills = newCurrBills;
-        needsUpdate = true;
-      }
-    }
+    // The MIGRATION: Propagate bills forward block has been removed to allow bill deletion
     
     if (needsUpdate) {
       setDbState(newDb);

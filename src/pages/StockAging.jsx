@@ -93,11 +93,14 @@ const StockAging = () => {
         >
 
           <div className="space-y-4">
-            {Object.keys(stockAging).map((key) => {
+            {['0-60', '>60'].map((key) => {
               const labels = {
                 '0-60': '0 - 60 Hari (Lancar/Menengah)',
                 '>60': '> 60 Hari (Mati / Dead Stock)',
               };
+
+              // Fallback to 0 if key doesn't exist yet during migration
+              const val = stockAging[key] || 0;
 
               return (
                 <div key={key} className="flex flex-col md:flex-row md:items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
@@ -105,12 +108,12 @@ const StockAging = () => {
                   {isEditing ? (
                     <CurrencyInput
                       className="input-field max-w-[200px]"
-                      value={formData[key]}
+                      value={formData[key] || 0}
                       onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
                     />
                   ) : (
                     <span className={`font-bold text-lg ${key === '>60' && isCritical ? 'text-red-600' : 'text-slate-800'}`}>
-                      {formatRupiah(stockAging[key])}
+                      {formatRupiah(val)}
                     </span>
                   )}
                 </div>
